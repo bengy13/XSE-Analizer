@@ -192,35 +192,90 @@ canvas{display:block;}
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
 @media(max-width:640px){.two-col{grid-template-columns:1fr;}.diag-grid{grid-template-columns:1fr;}}
 .footer{text-align:center;font-size:10px;color:var(--mut);padding:20px 0 8px;border-top:1px solid var(--bdr);margin-top:40px;}
+/* ─ Detail Modal ─ */
+.detail-modal{position:fixed;inset:0;z-index:300;display:none;align-items:center;justify-content:center;background:#00000090;padding:16px;backdrop-filter:blur(2px);}
+.detail-modal.open{display:flex;}
+.detail-modal-inner{background:var(--surf2);border:1px solid var(--bdr);border-radius:14px;overflow:hidden;max-width:800px;width:100%;max-height:90vh;display:flex;flex-direction:column;animation:slideIn .2s ease;box-shadow:0 24px 80px #00000099;}
+.detail-modal-scroll{overflow-y:auto;flex:1;}
+/* ─ Connection Failure Priority Rows ─ */
+.conn-fail-row td{background:#e0525210 !important;border-bottom-color:#e0525233 !important;}
+.conn-fail-row:hover td{background:#e0525220 !important;}
+.conn-fail-row .td-first{border-left:3px solid var(--red);}
+.login-fail-row td{background:#f0a50010 !important;border-bottom-color:#f0a50033 !important;}
+.login-fail-row:hover td{background:#f0a50020 !important;}
+.login-fail-row .td-first{border-left:3px solid var(--acc);}
+.sem-fail-row td{background:#9b5de510 !important;}
+.sem-fail-row:hover td{background:#9b5de520 !important;}
+.sem-fail-row .td-first{border-left:3px solid var(--purple);}
+.priority-icon{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:700;font-family:monospace;vertical-align:middle;margin-left:4px;padding:1px 5px;border-radius:3px;}
+.priority-icon.high{color:var(--red);background:#e0525222;border:1px solid #e0525244;}
+.priority-icon.med{color:var(--acc);background:#f0a50022;border:1px solid #f0a50044;}
+.priority-icon.low{color:var(--purple);background:#9b5de522;border:1px solid #9b5de544;}
+/* ─ Toolbar differentiation ─ */
+.toolbar-section-label{font-size:10px;text-transform:uppercase;letter-spacing:.14em;font-weight:700;padding:3px 10px;border-radius:5px;white-space:nowrap;flex-shrink:0;}
+.toolbar-section-label.error{color:var(--red);background:#e0525218;border:1px solid #e0525244;}
+.toolbar-section-label.trace{color:var(--teal);background:#2ec4b618;border:1px solid #2ec4b644;}
+.toolbar-error .search-input,.toolbar-error .filter-sel{border-color:#e0525240;}
+.toolbar-error .search-input:focus,.toolbar-error .filter-sel:focus{border-color:var(--red);box-shadow:0 0 0 2px #e0525218;}
+.toolbar-trace .search-input,.toolbar-trace .filter-sel{border-color:#2ec4b640;}
+.toolbar-trace .search-input:focus,.toolbar-trace .filter-sel:focus{border-color:var(--teal);box-shadow:0 0 0 2px #2ec4b618;}
+/* ─ Info icon button ─ */
+.owner-btn{background:transparent;border:1px solid var(--bdr);border-radius:8px;color:var(--mut);font-size:11px;padding:6px 12px;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px;font-family:inherit;white-space:nowrap;}
+.owner-btn:hover{border-color:var(--acc);color:var(--acc);}
+/* ─ Welcome tips & signatures ─ */
+.tip-card{background:var(--surf);border:1px solid var(--bdr);border-left:4px solid var(--acc);border-radius:10px;padding:18px 20px;margin-bottom:16px;}
+.tip-card-title{font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--acc);margin-bottom:12px;display:flex;align-items:center;gap:7px;font-weight:700;}
+.tip-list{list-style:none;display:flex;flex-direction:column;gap:7px;}
+.tip-list li{font-size:11px;color:var(--dim);line-height:1.6;padding-left:16px;position:relative;}
+.tip-list li::before{content:"›";position:absolute;left:0;color:var(--acc);font-weight:700;}
+.sig-card{background:var(--surf);border:1px solid var(--teal);border-left:4px solid var(--teal);border-radius:10px;padding:18px 20px;margin-bottom:16px;}
+.sig-card-title{font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--teal);margin-bottom:12px;display:flex;align-items:center;gap:7px;font-weight:700;}
+.sig-row{display:grid;grid-template-columns:130px 1fr;gap:8px;margin-bottom:8px;align-items:start;font-size:11px;}
+.sig-key{color:var(--mut);}
+.sig-val{display:flex;flex-wrap:wrap;gap:4px;}
+.sig-badge{font-family:monospace;font-size:10px;background:#2ec4b618;color:var(--teal);border:1px solid #2ec4b644;border-radius:4px;padding:2px 8px;}
+/* ─ Chart improvements ─ */
+.chart-box-title{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
+.chart-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;}
+.chart-legend-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--dim);}
+.chart-legend-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+/* ─ Step card improvements ─ */
+.step-card-warn{background:#f0a50012;border-color:#f0a50055;}
+.step-body strong.warn{color:var(--acc);}
 </style>
 </head>
 <body>
 <div class="app">
   <div class="header">
-    <div class="logo" onclick="toggleOwnerModal()" style="cursor:pointer">
+    <div class="logo">
       <div class="logo-icon">⟁</div>
       <div><div class="logo-title">XSE <span>Log</span> Analyzer</div><div class="logo-sub">Servicio de Sincronización · OXXO</div></div>
     </div>
-    <div class="status-pill">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <button class="owner-btn" onclick="toggleOwnerModal()" title="Información del sistema" style="width:36px;height:36px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;border-color:var(--bdr)">ⓘ</button>
+      <div class="status-pill">
       <div class="status-dot idle" id="status-dot"></div>
       <span class="status-text" id="status-text">Sin datos cargados</span>
     </div>
+    </div>
   </div>
 
-  <div id="owner-modal" style="display:none;position:fixed;inset:0;z-index:500;align-items:center;justify-content:center;background:#00000070">
-    <div style="background:var(--surf);border:1px solid var(--acc);border-radius:14px;padding:28px 32px;max-width:340px;width:90%;box-shadow:0 8px 40px #000000aa;position:relative;animation:slideIn .2s ease">
-      <button onclick="toggleOwnerModal()" style="position:absolute;top:12px;right:14px;background:transparent;border:none;color:var(--dim);font-size:18px;cursor:pointer;line-height:1">✕</button>
-      <div style="text-align:center;margin-bottom:16px">
-        <div style="font-size:36px;margin-bottom:8px">⟁</div>
-        <div style="font-size:16px;font-weight:700;font-family:'Courier New',monospace;color:var(--acc)">XSE Log Analyzer</div>
-        <div style="font-size:11px;color:var(--mut);margin-top:3px">Servicio de Sincronización · OXXO</div>
+  <div id="owner-modal" style="display:none;position:fixed;inset:0;z-index:500;align-items:center;justify-content:center;background:#00000080;backdrop-filter:blur(3px)" onclick="handleOwnerModalBg(event)">
+    <div style="background:var(--surf);border:1px solid var(--bdr);border-radius:16px;padding:0;max-width:320px;width:90%;box-shadow:0 20px 60px #000000cc;position:relative;animation:slideIn .2s ease;overflow:hidden">
+      <div style="background:#0d1018;padding:28px 28px 22px;text-align:center;border-bottom:1px solid var(--bdr)">
+        <div style="width:52px;height:52px;background:var(--acc);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px;color:#000;font-family:monospace;font-weight:700;margin:0 auto 14px">⟁</div>
+        <div style="font-size:17px;font-weight:700;font-family:'Courier New',monospace;color:var(--acc)">XSE Log Analyzer</div>
+        <div style="font-size:11px;color:var(--mut);margin-top:4px">Servicio de Sincronización · OXXO</div>
       </div>
-      <div style="border-top:1px solid var(--bdr);padding-top:16px">
-        <div style="font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.12em;margin-bottom:8px">Propietario del Sistema</div>
-        <div style="font-size:15px;font-weight:700;color:var(--txt);font-family:'Segoe UI',sans-serif">Ing. Benjamin Ruiz Tadeo</div>
-        <div style="font-size:11px;color:var(--dim);margin-top:4px">Todos los derechos reservados</div>
+      <div style="padding:20px 28px 22px;text-align:center">
+        <div style="font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.14em;margin-bottom:10px">Propietario del Sistema</div>
+        <div style="font-size:16px;font-weight:700;color:var(--txt);font-family:'Segoe UI',sans-serif;margin-bottom:4px">Ing. Benjamin Ruiz Tadeo</div>
+        <div style="font-size:11px;color:var(--dim)">Todos los derechos reservados</div>
       </div>
-      <div style="border-top:1px solid var(--bdr);margin-top:16px;padding-top:12px;font-size:10px;color:var(--mut);text-align:center">© ${new Date().getFullYear()} · Uso interno autorizado únicamente</div>
+      <div style="border-top:1px solid var(--bdr);padding:12px 28px;font-size:10px;color:var(--mut);text-align:center;background:#0d1018" id="owner-modal-year">
+        Uso interno autorizado únicamente
+      </div>
+      <button onclick="toggleOwnerModal()" style="position:absolute;top:12px;right:14px;background:transparent;border:none;color:var(--dim);font-size:16px;cursor:pointer;line-height:1;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;transition:all .15s" onmouseover="this.style.background='#ffffff18'" onmouseout="this.style.background='transparent'">✕</button>
     </div>
   </div>
 
@@ -242,6 +297,11 @@ canvas{display:block;}
   <div class="tabs" id="tabs" style="display:none"></div>
   <div id="content"></div>
   <div class="footer" id="footer">XSE Log Analyzer v7 · Desarrollado para el análisis del servicio de sincronización OXXO</div>
+</div>
+<div class="detail-modal" id="detail-modal" onclick="handleDetailModalBg(event)">
+  <div class="detail-modal-inner" id="detail-modal-inner">
+    <div class="detail-modal-scroll" id="detail-modal-scroll"></div>
+  </div>
 </div>
 <script>
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -271,7 +331,8 @@ function hasTrace(){return traceStats!==null;}
 function ecColor(ec){return ec==="26"?C.red:ec==="0"?C.teal:C.acc;}
 function ecTag(ec){const cls=ec==="26"?"tag-sql26":ec==="0"?"tag-app":"tag-other",lbl=ec!=="0"?`SQL-${ec}`:"App";return`<span class="tag ${cls}">${lbl}</span>`;}
 function sortArrow(col,key,dir){if(key!==col)return"<span style='color:var(--mut);margin-left:4px;font-size:10px'>↕</span>";return`<span style='color:var(--acc);margin-left:4px;font-size:10px'>${dir==="asc"?"↑":"↓"}</span>`;}
-function toggleOwnerModal(){const m=document.getElementById("owner-modal");m.style.display=m.style.display==="flex"?"none":"flex";}
+function toggleOwnerModal(){const m=document.getElementById("owner-modal");const isOpen=m.style.display==="flex";m.style.display=isOpen?"none":"flex";if(!isOpen){const y=document.getElementById("owner-modal-year");if(y)y.textContent=`© ${new Date().getFullYear()} · Uso interno autorizado únicamente`;}}
+function handleOwnerModalBg(e){if(e.target===e.currentTarget)toggleOwnerModal();}
 function durationColor(ms){return ms>200?C.red:ms>50?C.acc:C.grn;}
 function msClass(ms){return ms>200?"very-slow":ms>50?"slow":"";}
 
@@ -617,7 +678,7 @@ function buildTabs(){
     return`<button class="tab-btn ${activeTab===t.id?"active":""} ${t.trace?"trace-tab":""}" onclick="switchTab('${t.id}')">${t.l}</button>`;
   }).join("");
 }
-function switchTab(id){activeTab=id;if(id!=="logs")logState.selected=null;buildTabs();renderCurrentTab();}
+function switchTab(id){activeTab=id;if(id!=="logs"){logState.selected=null;closeDetailModal();}buildTabs();renderCurrentTab();}
 function renderCurrentTab(){
   if(appMode==="none"){renderWelcome();return;}
   const t=activeTab;
@@ -641,9 +702,58 @@ function renderWelcome(){
       <div class="welcome-hero-sub">Análisis inteligente de logs del servicio de sincronización OXXO. Compatible con logs de <strong style="color:var(--red)">errores</strong> y logs de <strong style="color:var(--teal)">traza/información</strong>.</div>
     </div>
     <div class="welcome-steps">
-      <div class="step-card"><div class="step-num">1</div><div class="step-title">Logs de Errores</div><div class="step-body">Archivos <code>error_XSE_*.log</code> — Análisis de fallos SQL, autenticación y conectividad. El nombre determina el ID del terminal.</div></div>
-      <div class="step-card"><div class="step-num">2</div><div class="step-title">Logs de Traza</div><div class="step-body">Archivos <code>traceProcess*.log</code> — Análisis de rendimiento, ciclos del scheduler, actividad por hora y componentes.</div></div>
-      <div class="step-card"><div class="step-num">3</div><div class="step-title">Carga Mixta</div><div class="step-body">Puedes cargar ambos tipos simultáneamente. El sistema detecta el formato automáticamente y presenta pestañas separadas.</div></div>
+      <div class="step-card">
+        <div class="step-num">1</div>
+        <div class="step-title">Nombra bien tus archivos</div>
+        <div class="step-body">El sistema detecta el terminal desde el nombre del archivo. Usa nombres como:<br><br>
+          <code>error_XSE_VT3.log</code><br><code>error_XSE_VT1.log</code><br><code>traceProcess_XSE.log</code><br><br>
+          El último segmento separado por <code>_</code> se usará como nombre del terminal (ej: <code>VT3</code>, <code>PRO</code>).
+        </div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">2</div>
+        <div class="step-title">Carga uno o varios archivos</div>
+        <div class="step-body">Arrastra los archivos al área de carga o usa el botón de selección. Puedes cargar varios terminales al mismo tiempo para obtener una vista comparativa.<br><br>
+          <strong class="warn">⚠ Cada nueva carga reemplaza completamente el análisis anterior.</strong>
+        </div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">3</div>
+        <div class="step-title">Carga Mixta</div>
+        <div class="step-body">Puedes cargar archivos de <strong style="color:var(--red)">errores</strong> y de <strong style="color:var(--teal)">traza</strong> simultáneamente. El sistema detecta el formato automáticamente y presenta pestañas separadas con controles visuales diferenciados.</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">4</div>
+        <div class="step-title">Explora el análisis</div>
+        <div class="step-body">Usa las pestañas para navegar entre:<br><br>
+          · <strong style="color:var(--acc)">Vista General</strong> — comparativa entre terminales<br>
+          · <strong style="color:var(--red)">Terminal X</strong> — análisis individual con gráficas<br>
+          · <strong style="color:var(--red)">Visor Errores</strong> — listado filtrable con log original<br>
+          · <strong style="color:var(--teal)">Resumen / Rendimiento / Traza</strong> — análisis de traza
+        </div>
+      </div>
+    </div>
+
+    <div class="tip-card">
+      <div class="tip-card-title">💡 Consejos para Mejor Análisis</div>
+      <ul class="tip-list">
+        <li>Carga archivos de múltiples terminales juntos para obtener la vista comparativa en <strong style="color:var(--acc)">Vista General</strong>.</li>
+        <li>En el <strong style="color:var(--red)">Visor de Errores</strong>, haz clic en cualquier fila para ver el fragmento original del log con resaltado de sintaxis en ventana emergente.</li>
+        <li>Los errores de <strong style="color:var(--red)">falla de conexión</strong> (SQL-26, login fallido, semáforo) están resaltados con prioridad visual en la tabla de errores.</li>
+        <li>Los filtros por terminal, componente y código de error en el <strong style="color:var(--red)">Visor de Errores</strong> permiten aislar incidentes específicos.</li>
+        <li>En el <strong style="color:var(--teal)">Visor de Traza</strong>, usa el filtro por tipo de mensaje para aislar eventos de Scheduler, procesos o inicio/parada del servicio.</li>
+        <li>El botón <strong style="color:var(--acc)">Copiar</strong> en el detalle del log copia el fragmento original al portapapeles.</li>
+      </ul>
+    </div>
+
+    <div class="sig-card">
+      <div class="sig-card-title">🔍 Firmas de Validación del Servicio XSE</div>
+      <div style="font-size:11px;color:var(--dim);margin-bottom:12px">El sistema verifica que los archivos cargados correspondan al servicio XSE usando estas firmas únicas:</div>
+      <div class="sig-row"><div class="sig-key">Namespace</div><div class="sig-val"><span class="sig-badge">Oxxo.Services.XSE.*</span></div></div>
+      <div class="sig-row"><div class="sig-key">Formato Error</div><div class="sig-val"><span class="sig-badge">Error Event-900 DD/MM/YYYY (thd-NNN) …</span></div></div>
+      <div class="sig-row"><div class="sig-key">Formato Traza</div><div class="sig-val"><span class="sig-badge">Information Event-600 DD/MM/YYYY (thd-NNN) …</span></div></div>
+      <div class="sig-row"><div class="sig-key">Componentes</div><div class="sig-val"><span class="sig-badge">SyncDAO</span><span class="sig-badge">MachineDAO</span><span class="sig-badge">StatusDAO</span><span class="sig-badge">ConfigDAO</span><span class="sig-badge">ExecuteTaskDomain</span></div></div>
+      <div class="sig-row"><div class="sig-key">Event ID</div><div class="sig-val"><span class="sig-badge">Event-900</span><span class="sig-badge" style="background:#f0a50018;color:var(--acc);border-color:#f0a50044">Event-600</span></div></div>
     </div>
   </div>`;
 }
@@ -653,71 +763,111 @@ function drawBarMeta(id,meta){
   const cv=document.getElementById(id);if(!cv)return;
   const ctx=cv.getContext("2d");
   const W=cv.offsetWidth||cv.width;cv.width=W;cv.height=cv.offsetHeight||cv.height;
-  const H=cv.height,pad={t:36,r:20,b:56,l:50};
+  const H=cv.height,pad={t:40,r:20,b:66,l:54};
   const cW=W-pad.l-pad.r,cH=H-pad.t-pad.b;
   ctx.clearRect(0,0,W,H);
   if(!meta.length)return;
   const values=meta.map(m=>m.total),max=Math.max(...values,1),n=meta.length;
-  const step=cW/n,bW=Math.min(80,Math.max(30,step*0.65));
+  const step=cW/n,bW=Math.min(90,Math.max(30,step*0.65));
+  // Grid lines
   ctx.strokeStyle=C.bdr;ctx.lineWidth=1;
-  for(let i=0;i<=4;i++){const y=pad.t+cH*(1-i/4);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();ctx.fillStyle=C.mut;ctx.font="10px monospace";ctx.textAlign="right";ctx.fillText(Math.round(max*i/4),pad.l-5,y+4);}
+  for(let i=0;i<=4;i++){
+    const y=pad.t+cH*(1-i/4);
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();
+    ctx.fillStyle=C.mut;ctx.font="10px monospace";ctx.textAlign="right";
+    ctx.fillText(Math.round(max*i/4).toLocaleString(),pad.l-7,y+4);
+  }
   meta.forEach((m,i)=>{
     const x=pad.l+step*i+step/2-bW/2,bH=Math.max(2,(m.total/max)*cH),y=pad.t+cH-bH;
-    ctx.fillStyle=C.acc;ctx.globalAlpha=0.9;ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,y,bW,bH,3);else ctx.rect(x,y,bW,bH);ctx.fill();ctx.globalAlpha=1;
-    ctx.fillStyle=C.acc;ctx.font="bold 11px monospace";ctx.textAlign="center";ctx.fillText(m.total.toLocaleString(),x+bW/2,y-4);
-    ctx.fillStyle="#e0e4f0";ctx.font="bold 11px sans-serif";ctx.textAlign="center";ctx.fillText(m.name,x+bW/2,H-pad.b+14);
-    ctx.fillStyle=C.teal;ctx.font="9px monospace";ctx.textAlign="center";ctx.fillText(m.d1,x+bW/2,H-pad.b+26);
-    ctx.fillStyle=C.dim;ctx.font="9px monospace";ctx.fillText(m.d2,x+bW/2,H-pad.b+38);
+    // Gradient fill
+    const grad=ctx.createLinearGradient(x,y,x,y+bH);
+    grad.addColorStop(0,C.acc);grad.addColorStop(1,C.acc+"55");
+    ctx.fillStyle=grad;
+    if(ctx.roundRect)ctx.roundRect(x,y,bW,bH,4);else ctx.rect(x,y,bW,bH);
+    ctx.fill();
+    // Glow effect on top
+    ctx.fillStyle=C.acc+"33";ctx.fillRect(x,y,bW,3);
+    // Value label
+    ctx.fillStyle=C.acc;ctx.font="bold 12px monospace";ctx.textAlign="center";
+    ctx.fillText(m.total.toLocaleString(),x+bW/2,y-6);
+    // Name label
+    ctx.fillStyle="#e0e4f0";ctx.font="bold 11px sans-serif";ctx.textAlign="center";
+    ctx.fillText(m.name,x+bW/2,H-pad.b+16);
+    ctx.fillStyle=C.teal;ctx.font="9px monospace";ctx.textAlign="center";
+    ctx.fillText(m.d1,x+bW/2,H-pad.b+30);
+    ctx.fillStyle=C.dim;ctx.font="9px monospace";
+    ctx.fillText(m.d2,x+bW/2,H-pad.b+44);
     if(bH>22){ctx.fillStyle="#00000055";ctx.font="9px monospace";ctx.textAlign="center";ctx.fillText(`${m.numDays}d`,x+bW/2,y+bH/2+4);}
   });
+  // X axis line
+  ctx.strokeStyle=C.bdr;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad.l,pad.t+cH);ctx.lineTo(W-pad.r,pad.t+cH);ctx.stroke();
 }
 
 function drawHBar(id,labels,values,color){
   const cv=document.getElementById(id);if(!cv)return;
   const ctx=cv.getContext("2d");
   const W=cv.offsetWidth||cv.width;cv.width=W;cv.height=cv.offsetHeight||cv.height;
-  const H=cv.height,lW=170,pad={t:8,r:24,b:8,l:lW};
+  const H=cv.height,lW=180,pad={t:10,r:60,b:10,l:lW};
   const cW=W-pad.l-pad.r,cH=H-pad.t-pad.b;
   ctx.clearRect(0,0,W,H);
   if(!values.length)return;
-  const max=Math.max(...values,1),bH=Math.max(4,cH/values.length*0.55),step=cH/values.length;
+  const max=Math.max(...values,1),bH=Math.max(6,cH/values.length*0.6),step=cH/values.length;
   values.forEach((v,i)=>{
     const y=pad.t+step*i+step/2-bH/2,bw=(v/max)*cW;
-    ctx.fillStyle=color+"44";ctx.fillRect(pad.l,y,cW,bH);
-    ctx.fillStyle=color;ctx.beginPath();if(ctx.roundRect)ctx.roundRect(pad.l,y,bw,bH,2);else ctx.rect(pad.l,y,bw,bH);ctx.fill();
+    // Background track
+    ctx.fillStyle=color+"18";ctx.beginPath();if(ctx.roundRect)ctx.roundRect(pad.l,y,cW,bH,3);else ctx.rect(pad.l,y,cW,bH);ctx.fill();
+    // Gradient fill
+    const grad=ctx.createLinearGradient(pad.l,0,pad.l+bw,0);
+    grad.addColorStop(0,color);grad.addColorStop(1,color+"88");
+    ctx.fillStyle=grad;
+    ctx.beginPath();if(ctx.roundRect)ctx.roundRect(pad.l,y,bw,bH,3);else ctx.rect(pad.l,y,bw,bH);ctx.fill();
+    // Label
     ctx.fillStyle=C.dim;ctx.font="10px sans-serif";ctx.textAlign="right";
-    const s=labels[i]||"",sh=s.length>26?s.slice(0,26)+"…":s;
-    ctx.fillText(sh,pad.l-6,y+bH/2+4);
-    ctx.fillStyle=C.mut;ctx.font="10px monospace";ctx.textAlign="left";ctx.fillText(v,pad.l+bw+4,y+bH/2+4);
+    const s=labels[i]||"",sh=s.length>28?s.slice(0,28)+"…":s;
+    ctx.fillText(sh,pad.l-8,y+bH/2+4);
+    // Value
+    ctx.fillStyle=color;ctx.font="bold 10px monospace";ctx.textAlign="left";ctx.fillText(v.toLocaleString(),pad.l+bw+6,y+bH/2+4);
   });
 }
 
-// Hourly activity bar chart (0-23)
 function drawHourBar(id,hourCounts){
   const cv=document.getElementById(id);if(!cv)return;
   const ctx=cv.getContext("2d");
-  const W=cv.offsetWidth||600;cv.width=W;cv.height=cv.offsetHeight||180;
-  const H=cv.height,pad={t:20,r:16,b:32,l:44};
+  const W=cv.offsetWidth||600;cv.width=W;cv.height=cv.offsetHeight||200;
+  const H=cv.height,pad={t:28,r:16,b:38,l:50};
   const cW=W-pad.l-pad.r,cH=H-pad.t-pad.b;
   ctx.clearRect(0,0,W,H);
   const hours=Array.from({length:24},(_,i)=>String(i).padStart(2,"0"));
   const values=hours.map(h=>hourCounts[h]||0);
-  const max=Math.max(...values,1);
-  const bW=cW/24*0.75,gap=cW/24;
+  const max=Math.max(...values,1),maxIdx=values.indexOf(Math.max(...values));
+  const bW=cW/24*0.72,gap=cW/24;
   // Grid
   ctx.strokeStyle=C.bdr;ctx.lineWidth=1;
-  for(let i=0;i<=4;i++){const y=pad.t+cH*(1-i/4);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();ctx.fillStyle=C.mut;ctx.font="9px monospace";ctx.textAlign="right";ctx.fillText(Math.round(max*i/4),pad.l-4,y+4);}
+  for(let i=0;i<=4;i++){
+    const y=pad.t+cH*(1-i/4);
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();
+    ctx.fillStyle=C.mut;ctx.font="9px monospace";ctx.textAlign="right";
+    ctx.fillText(Math.round(max*i/4).toLocaleString(),pad.l-5,y+4);
+  }
+  // X axis
+  ctx.strokeStyle=C.bdr;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad.l,pad.t+cH);ctx.lineTo(W-pad.r,pad.t+cH);ctx.stroke();
   hours.forEach((h,i)=>{
     const x=pad.l+gap*i+gap/2-bW/2;
     const v=values[i],bH=Math.max(1,(v/max)*cH),y=pad.t+cH-bH;
-    const clr=v===Math.max(...values)?C.acc:C.teal;
-    ctx.fillStyle=clr+"cc";ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,y,bW,bH,2);else ctx.rect(x,y,bW,bH);ctx.fill();
-    if(i%3===0||i===23){ctx.fillStyle=C.dim;ctx.font="9px monospace";ctx.textAlign="center";ctx.fillText(h+"h",x+bW/2,H-pad.b+12);}
+    const isPeak=i===maxIdx;
+    const grad=ctx.createLinearGradient(x,y,x,y+bH);
+    if(isPeak){grad.addColorStop(0,C.acc);grad.addColorStop(1,C.acc+"55");}
+    else{grad.addColorStop(0,C.teal+"cc");grad.addColorStop(1,C.teal+"33");}
+    ctx.fillStyle=grad;
+    ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,y,bW,bH,2);else ctx.rect(x,y,bW,bH);ctx.fill();
+    if(i%3===0||i===23){ctx.fillStyle=isPeak?C.acc:C.dim;ctx.font=isPeak?"bold 9px monospace":"9px monospace";ctx.textAlign="center";ctx.fillText(h+"h",x+bW/2,H-pad.b+14);}
+    if(v>0&&isPeak){ctx.fillStyle=C.acc;ctx.font="bold 9px monospace";ctx.textAlign="center";ctx.fillText(v,x+bW/2,y-4);}
   });
   // Peak label
-  const peakHour=hours[values.indexOf(Math.max(...values))];
-  ctx.fillStyle=C.acc;ctx.font="bold 10px monospace";ctx.textAlign="center";
-  ctx.fillText(`Pico: ${peakHour}:00 (${Math.max(...values).toLocaleString()} eventos)`,W/2,12);
+  ctx.fillStyle=C.acc;ctx.font="bold 11px monospace";ctx.textAlign="center";
+  ctx.fillText(`⭐ Pico: ${hours[maxIdx]}:00 (${Math.max(...values).toLocaleString()} eventos)`,W/2,16);
 }
 
 // Duration horizontal bar (performance)
@@ -725,7 +875,7 @@ function drawDurationHBar(id,labels,avgs,maxes){
   const cv=document.getElementById(id);if(!cv)return;
   const ctx=cv.getContext("2d");
   const W=cv.offsetWidth||600;cv.width=W;
-  const rowH=32,pad={t:10,r:80,b:10,l:240};
+  const rowH=38,pad={t:14,r:80,b:14,l:250};
   cv.height=rowH*labels.length+pad.t+pad.b;
   const H=cv.height,cW=W-pad.l-pad.r;
   ctx.clearRect(0,0,W,H);
@@ -733,19 +883,19 @@ function drawDurationHBar(id,labels,avgs,maxes){
   labels.forEach((lbl,i)=>{
     const y=pad.t+i*rowH;
     const avgW=(avgs[i]/maxVal)*cW,maxW=(maxes[i]/maxVal)*cW;
-    // Max bar (background)
-    ctx.fillStyle=C.bdr;ctx.fillRect(pad.l,y+8,cW,14);
-    // Max bar fill
-    ctx.fillStyle=durationColor(maxes[i])+"66";ctx.fillRect(pad.l,y+8,maxW,14);
-    // Avg bar
-    ctx.fillStyle=durationColor(avgs[i]);ctx.fillRect(pad.l,y+10,avgW,10);
-    // Label
+    const clrAvg=durationColor(avgs[i]);
+    ctx.fillStyle=C.bdr;ctx.beginPath();if(ctx.roundRect)ctx.roundRect(pad.l,y+10,cW,16,3);else ctx.rect(pad.l,y+10,cW,16);ctx.fill();
+    ctx.fillStyle=durationColor(maxes[i])+"33";ctx.beginPath();if(ctx.roundRect)ctx.roundRect(pad.l,y+10,maxW,16,3);else ctx.rect(pad.l,y+10,maxW,16);ctx.fill();
+    const grad=ctx.createLinearGradient(pad.l,0,pad.l+Math.max(avgW,1),0);
+    grad.addColorStop(0,clrAvg);grad.addColorStop(1,clrAvg+"88");
+    ctx.fillStyle=grad;ctx.beginPath();if(ctx.roundRect)ctx.roundRect(pad.l,y+12,Math.max(avgW,2),12,2);else ctx.rect(pad.l,y+12,Math.max(avgW,2),12);ctx.fill();
     ctx.fillStyle=C.dim;ctx.font="10px sans-serif";ctx.textAlign="right";
-    const short=lbl.length>32?lbl.slice(0,32)+"…":lbl;
-    ctx.fillText(short,pad.l-6,y+20);
-    // Value
-    ctx.fillStyle=durationColor(avgs[i]);ctx.font="bold 10px monospace";ctx.textAlign="left";
-    ctx.fillText(`${avgs[i]}ms avg`,pad.l+avgW+4,y+20);
+    const short=lbl.length>36?lbl.slice(0,36)+"…":lbl;
+    ctx.fillText(short,pad.l-8,y+22);
+    ctx.fillStyle=clrAvg;ctx.font="bold 10px monospace";ctx.textAlign="left";
+    ctx.fillText(avgs[i]+"ms",pad.l+avgW+6,y+22);
+    ctx.fillStyle=C.mut;ctx.font="9px monospace";
+    ctx.fillText("max:"+maxes[i]+"ms",pad.l+maxW+6,y+33);
   });
 }
 
@@ -833,23 +983,37 @@ function drawTimeline(id,buckets,selIdx,hoverIdx){
   const cv=document.getElementById(id);if(!cv)return;
   const ctx=cv.getContext("2d");
   const W=cv.offsetWidth||cv.width;cv.width=W;cv.height=cv.offsetHeight||cv.height;
-  const H=cv.height,pad={t:20,r:20,b:28,l:44};
+  const H=cv.height,pad={t:24,r:20,b:32,l:50};
   const cW=W-pad.l-pad.r,cH=H-pad.t-pad.b;
   ctx.clearRect(0,0,W,H);
   if(!buckets.length)return;
   const vals=buckets.map(b=>b.count),max=Math.max(...vals,1);
-  const n=buckets.length,step=cW/n,bW=Math.max(2,Math.min(60,step*0.75));
+  const n=buckets.length,step=cW/n,bW=Math.max(2,Math.min(64,step*0.78));
   ctx.strokeStyle=C.bdr;ctx.lineWidth=1;
-  for(let i=0;i<=4;i++){const y=pad.t+cH*(1-i/4);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();ctx.fillStyle=C.mut;ctx.font="9px monospace";ctx.textAlign="right";ctx.fillText(Math.round(max*i/4),pad.l-4,y+4);}
+  for(let i=0;i<=4;i++){
+    const y=pad.t+cH*(1-i/4);
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();
+    ctx.fillStyle=C.mut;ctx.font="9px monospace";ctx.textAlign="right";
+    ctx.fillText(Math.round(max*i/4).toLocaleString(),pad.l-5,y+4);
+  }
+  // X axis
+  ctx.strokeStyle=C.bdr;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad.l,pad.t+cH);ctx.lineTo(W-pad.r,pad.t+cH);ctx.stroke();
   tlBarMeta[id]=[];
   buckets.forEach((b,i)=>{
     const x=pad.l+step*i+step/2-bW/2,bH=Math.max(2,(b.count/max)*cH),y=pad.t+cH-bH;
     const isSel=i===selIdx,isHov=i===hoverIdx;
-    const clr=isSel?C.acc:isHov?"#f0a50088":C.teal;
-    ctx.fillStyle=clr;ctx.globalAlpha=isSel?1:0.82;
-    ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,y,bW,bH,2);else ctx.rect(x,y,bW,bH);ctx.fill();ctx.globalAlpha=1;
-    if(bH>14||isSel){ctx.fillStyle=isSel?"#000":C.dim;ctx.font="bold 9px monospace";ctx.textAlign="center";ctx.fillText(b.count,x+bW/2,y+(bH>14?bH/2+4:-4));}
-    if(n<=30||i%Math.ceil(n/15)===0){ctx.fillStyle=C.dim;ctx.font="9px monospace";ctx.textAlign="center";ctx.fillText(b.shortLabel,x+bW/2,H-pad.b+11);}
+    // Gradient
+    const grad=ctx.createLinearGradient(x,y,x,y+bH);
+    if(isSel){grad.addColorStop(0,C.acc);grad.addColorStop(1,C.acc+"77");}
+    else if(isHov){grad.addColorStop(0,C.acc+"aa");grad.addColorStop(1,C.acc+"33");}
+    else{grad.addColorStop(0,C.teal+"cc");grad.addColorStop(1,C.teal+"33");}
+    ctx.fillStyle=grad;
+    ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,y,bW,bH,3);else ctx.rect(x,y,bW,bH);ctx.fill();
+    // Value in bar
+    if(bH>18){ctx.fillStyle=isSel?"#000000aa":"#ffffff22";ctx.font="bold 9px monospace";ctx.textAlign="center";ctx.fillText(b.count,x+bW/2,y+bH/2+4);}
+    else if(isSel||isHov){ctx.fillStyle=C.acc;ctx.font="bold 9px monospace";ctx.textAlign="center";ctx.fillText(b.count,x+bW/2,y-4);}
+    if(n<=30||i%Math.ceil(n/15)===0){ctx.fillStyle=isSel?C.acc:C.dim;ctx.font=isSel?"bold 9px monospace":"9px monospace";ctx.textAlign="center";ctx.fillText(b.shortLabel,x+bW/2,H-pad.b+13);}
     tlBarMeta[id].push({x,y:pad.t,w:bW,h:cH,idx:i});
   });
 }
@@ -1084,6 +1248,12 @@ function renderTerminal(name){
   setTimeout(()=>{drawTimeline("chart-tl",getBuckets(data.day_counts,st.gran,st.daysLimit),st.selectedIdx,null);},0);
 }
 
+function isConnFail(e){return/Error al buscar el servidor|error: 26/i.test(e[F.raw])||e[F.ec]==="26";}
+function isLoginFail(e){return hasLoginFailed(e[F.raw]);}
+function isSemFail(e){return/semáforo|semaforo|timeout expired/i.test(e[F.raw]);}
+function getRowClass(e){if(isConnFail(e))return"conn-fail-row";if(isLoginFail(e))return"login-fail-row";if(isSemFail(e))return"sem-fail-row";return"";}
+function getPriorityIcon(e){if(isConnFail(e))return`<span class="priority-icon high">⚡ CONN</span>`;if(isLoginFail(e))return`<span class="priority-icon med">🔐 AUTH</span>`;if(isSemFail(e))return`<span class="priority-icon low">⏱ TIME</span>`;return"";}
+
 function renderLogViewer(){
   const ae=allEntries();
   const uVTs=[...new Set(ae.map(e=>e[F.vt]))].sort();
@@ -1093,11 +1263,11 @@ function renderLogViewer(){
   const{page,PER_PAGE,sortKey,sortDir,selected}=logState;
   const pages=Math.ceil(sorted.length/PER_PAGE)||1;
   const slice=sorted.slice(page*PER_PAGE,(page+1)*PER_PAGE);
-  const selEntry=selected!==null?ae.find(e=>e[F.i]===selected):null;
   function th(col,label){return`<th class="${sortKey===col?"sorted":""}" onclick="errSort('${col}')">${label}${sortArrow(col,sortKey,sortDir)}</th>`;}
   document.getElementById("content").innerHTML=`
-  <div class="toolbar">
-    <input class="search-input" placeholder="Buscar método, descripción, componente…" value="${esc(logState.search)}" oninput="errSearchInput(this.value)">
+  <div class="toolbar toolbar-error" style="border:1px solid #e0525230;border-radius:10px;padding:10px 12px;background:#e0525208;margin-bottom:16px;">
+    <span class="toolbar-section-label error">⚠ Log de Errores</span>
+    <input id="err-search-input" class="search-input" placeholder="Buscar método, descripción, componente…" value="${esc(logState.search)}" oninput="errSearchInput(this.value)" autocomplete="off">
     <select class="filter-sel" onchange="logState.fVT=this.value;logState.page=0;renderLogViewer()">
       <option value="all">Todas las terminales</option>${uVTs.map(v=>`<option value="${v}"${logState.fVT===v?" selected":""}>${v}</option>`).join("")}
     </select>
@@ -1108,18 +1278,21 @@ function renderLogViewer(){
       <option value="all">Todos los errores</option>${uErrs.map(v=>`<option value="${v}"${logState.fErr===v?" selected":""}>${v}</option>`).join("")}
     </select>
   </div>
-  <span class="hint">${filtered.length.toLocaleString()} de ${ae.length.toLocaleString()} entradas</span>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+    <span class="hint">${filtered.length.toLocaleString()} de ${ae.length.toLocaleString()} entradas</span>
+    <span style="font-size:10px;color:var(--dim)">· <span style="color:var(--red)">⚡ CONN</span> = falla de conexión &nbsp;<span style="color:var(--acc)">🔐 AUTH</span> = autenticación &nbsp;<span style="color:var(--purple)">⏱ TIME</span> = timeout</span>
+  </div>
   <div class="log-table-wrap">
     <table class="log-table">
       <thead><tr>${th("date","Fecha / Hora")}${th("vt","Terminal")}${th("comp","Componente")}${th("meth","Método")}${th("ec","Código")}<th>Descripción</th></tr></thead>
-      <tbody>${slice.map(e=>`<tr class="${selected===e[F.i]?"selected":""}" onclick="errSelectEntry(${e[F.i]})">
-        <td style="font-family:monospace;font-size:11px;white-space:nowrap"><span style="color:var(--teal)">${esc(e[F.date])}</span> <span style="color:var(--mut)">${esc(e[F.time]).slice(0,8)}</span></td>
+      <tbody>${slice.map(e=>{const rc=getRowClass(e);const pi=getPriorityIcon(e);return`<tr class="${rc}${selected===e[F.i]?" selected":""}" data-id="${e[F.i]}" onclick="errSelectEntry(${e[F.i]})">
+        <td class="${rc?"td-first":""}" style="font-family:monospace;font-size:11px;white-space:nowrap"><span style="color:var(--teal)">${esc(e[F.date])}</span> <span style="color:var(--mut)">${esc(e[F.time]).slice(0,8)}</span></td>
         <td><span class="tag tag-vt">${esc(e[F.vt])}</span></td>
         <td class="td-comp">${esc(e[F.comp])}</td>
         <td class="td-meth" title="${esc(e[F.meth])}">${esc(e[F.meth])}</td>
         <td>${ecTag(e[F.ec])}</td>
-        <td class="td-desc" title="${esc(e[F.ed])}">${esc(e[F.ed])}</td>
-      </tr>`).join("")}</tbody>
+        <td class="td-desc" title="${esc(e[F.ed])}">${pi}${esc(e[F.ed])}</td>
+      </tr>`;}).join("")}</tbody>
     </table>
   </div>
   <div class="pagination">
@@ -1131,9 +1304,7 @@ function renderLogViewer(){
       <button class="page-btn" onclick="errGoPage(${page+1})" ${page>=pages-1?"disabled":""}>›</button>
       <button class="page-btn" onclick="errGoPage(${pages-1})" ${page>=pages-1?"disabled":""}>»</button>
     </div>
-  </div>
-  ${selEntry?renderRawPanel(selEntry):""}
-  ${selEntry?`<div class="overlay" onclick="errSelectEntry(null)"></div>`:""}`;
+  </div>`;
 }
 function renderRawPanel(e){
   const ec=e[F.ec],color=ecColor(ec),lineNo=e[F.lineNo]||"?",rawText=e[F.raw]||"";
@@ -1169,6 +1340,68 @@ function renderRawPanel(e){
     <div class="raw-content-body"><pre class="raw-pre">${hlRaw(rawText)}</pre></div>
   </div>`;
 }
+// ─── Detail Modal ─────────────────────────────────────────────────────────────
+function openDetailModal(e){
+  const modal=document.getElementById("detail-modal");
+  const scroll=document.getElementById("detail-modal-scroll");
+  scroll.innerHTML=renderRawPanelModal(e);
+  modal.classList.add("open");
+}
+function closeDetailModal(){
+  const modal=document.getElementById("detail-modal");
+  modal.classList.remove("open");
+  logState.selected=null;
+  document.querySelectorAll(".log-table tr.selected").forEach(r=>r.classList.remove("selected"));
+}
+function handleDetailModalBg(e){if(e.target===e.currentTarget)closeDetailModal();}
+function renderRawPanelModal(e){
+  const ec=e[F.ec],color=ecColor(ec),lineNo=e[F.lineNo]||"?",rawText=e[F.raw]||"";
+  const loginFlag=hasLoginFailed(rawText),trans=getErrTranslation(e[F.ed],rawText);
+  const ecLabel=ec==="login"?"Auth Error":ec!=="0"?`SQL Error ${ec}`:"App Error";
+  const loginAlert=loginFlag?`<div style="background:#1a1000;border:1px solid #f0a50066;border-left:3px solid #f0a500;border-radius:6px;padding:10px 14px;margin-top:8px;"><div style="font-size:10px;color:#f0a500;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">🔐 Fallo de autenticación detectado</div><div style="font-size:11px;color:var(--dim);line-height:1.6">La cuenta <strong style="color:#f0a500;font-family:monospace">xse.service.account</strong> fue rechazada por SQL Server.</div></div>`:"";
+  return`<div>
+    <div style="background:#0d1018;padding:14px 20px;border-bottom:1px solid var(--bdr);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;align-items:center">
+          <span style="font-size:10px;border-radius:4px;padding:3px 10px;font-family:monospace;background:${color}22;color:${color};border:1px solid ${color}44;font-weight:700">${ecLabel}</span>
+          <span style="font-size:10px;color:var(--mut);font-family:monospace">${esc(e[F.vt])} · thd-${esc(e[F.thd])}</span>
+          <span style="font-size:10px;background:#2ec4b622;color:var(--teal);border:1px solid #2ec4b644;border-radius:4px;padding:2px 8px;font-family:monospace">Línea ${lineNo}</span>
+        </div>
+        <div style="font-family:monospace;font-size:14px;color:var(--txt);font-weight:600;margin-bottom:5px;word-break:break-all">${esc(e[F.meth])}</div>
+        <div style="font-size:11px"><span style="color:var(--teal);font-family:monospace;font-weight:600">${esc(e[F.date])}</span><span style="color:var(--dim);font-family:monospace;margin-left:8px">${esc(e[F.time]).slice(0,8)}</span></div>
+      </div>
+      <button onclick="closeDetailModal()" style="background:transparent;border:1px solid var(--bdr);border-radius:6px;color:var(--dim);font-size:18px;cursor:pointer;padding:4px 12px;line-height:1;flex-shrink:0;transition:all .15s" onmouseover="this.style.color='var(--txt)'" onmouseout="this.style.color='var(--dim)'">✕</button>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;padding:10px 20px;border-bottom:1px solid var(--bdr)">
+      ${[["Terminal",e[F.vt],C.acc],["Componente",e[F.comp],C.teal],["Código",ec==="login"?"AUTH":ec!=="0"?`SQL-${ec}`:"App",color],["Thread",`thd-${e[F.thd]}`,C.blue],["Línea",`#${lineNo}`,C.teal]].map(([l,v,c])=>`<div style="background:${c}18;border:1px solid ${c}33;border-radius:6px;padding:5px 12px"><div style="font-size:9px;color:var(--mut);text-transform:uppercase;letter-spacing:.1em">${l}</div><div style="font-size:12px;font-family:monospace;font-weight:600;color:${c}">${esc(v)}</div></div>`).join("")}
+    </div>
+    <div style="padding:12px 20px;border-bottom:1px solid var(--bdr)">
+      <div style="font-size:10px;color:var(--acc);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Descripción del Error</div>
+      <div style="font-size:13px;color:#f5c842;font-family:monospace;line-height:1.5">${esc(e[F.ed])}</div>
+      ${trans&&!loginFlag?`<div style="font-size:11px;color:var(--dim);line-height:1.6;background:#ffffff08;border-radius:5px;padding:8px 10px;margin-top:8px">${trans.icon} <strong style="color:${trans.color}">${trans.short}:</strong> ${trans.detail}</div>`:""}
+      ${loginAlert}
+    </div>
+    <div style="padding:8px 20px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center;background:#0d1018">
+      <div style="font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.1em">Fragmento Original · Línea ${lineNo}</div>
+      <button id="modal-copy-btn" onclick="copyModalRaw(${e[F.i]})" style="background:transparent;border:1px solid var(--bdr);border-radius:5px;color:var(--dim);font-size:11px;padding:4px 14px;cursor:pointer;font-family:inherit;transition:all .15s">📋 Copiar</button>
+    </div>
+    <div style="padding:16px 20px;max-height:320px;overflow-y:auto"><pre style="margin:0;font-size:11px;line-height:1.8;font-family:'Courier New',monospace;color:var(--dim);white-space:pre-wrap;word-break:break-all">${hlRaw(rawText)}</pre></div>
+  </div>`;
+}
+function copyModalRaw(id){
+  const e=allEntries().find(x=>x[F.i]===id);
+  const text=e?.[F.raw]||"";
+  const btn=document.getElementById("modal-copy-btn");
+  const doSuccess=()=>{if(btn){btn.textContent="✓ Copiado";btn.style.color="var(--grn)";btn.style.borderColor="var(--grn)";setTimeout(()=>{if(btn){btn.textContent="📋 Copiar";btn.style.color="";btn.style.borderColor="";}},2000);}};
+  if(navigator.clipboard&&window.isSecureContext){
+    navigator.clipboard.writeText(text).then(doSuccess).catch(()=>fallbackCopy(text,doSuccess));
+  } else {fallbackCopy(text,doSuccess);}
+}
+function fallbackCopy(text,cb){
+  const ta=document.createElement("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();
+  try{document.execCommand("copy");cb();}catch(e){}finally{document.body.removeChild(ta);}
+}
+
 function getErrFiltered(){
   let rows=allEntries();
   const{search,fVT,fComp,fErr}=logState;
@@ -1184,10 +1417,27 @@ function getErrSorted(rows){
   return[...rows].sort((a,b)=>{const va=a[idx]??"",vb=b[idx]??"";return sortDir==="asc"?(va<vb?-1:va>vb?1:0):(va>vb?-1:va<vb?1:0);});
 }
 let _errSearchTimer=null;
-function errSearchInput(val){logState.search=val;logState.page=0;clearTimeout(_errSearchTimer);_errSearchTimer=setTimeout(renderLogViewer,200);}
+function errSearchInput(val){
+  logState.search=val;logState.page=0;
+  clearTimeout(_errSearchTimer);
+  _errSearchTimer=setTimeout(()=>{
+    renderLogViewer();
+    const inp=document.getElementById("err-search-input");
+    if(inp){inp.focus();const l=inp.value.length;inp.setSelectionRange(l,l);}
+  },150);
+}
 function errSort(col){if(logState.sortKey===col)logState.sortDir=logState.sortDir==="asc"?"desc":"asc";else{logState.sortKey=col;logState.sortDir="desc";}logState.page=0;renderLogViewer();}
 function errGoPage(p){logState.page=p;renderLogViewer();}
-function errSelectEntry(id){logState.selected=logState.selected===id?null:id;renderLogViewer();}
+function errSelectEntry(id){
+  const prev=logState.selected;
+  if(prev===id){closeDetailModal();return;}
+  logState.selected=id;
+  document.querySelectorAll(".log-table tr.selected").forEach(r=>r.classList.remove("selected"));
+  const row=document.querySelector(`.log-table tr[data-id="${id}"]`);
+  if(row)row.classList.add("selected");
+  const e=allEntries().find(x=>x[F.i]===id);
+  if(e)openDetailModal(e);
+}
 function copyRaw(){const e=allEntries().find(x=>x[F.i]===logState.selected);navigator.clipboard?.writeText(e?.[F.raw]||"").then(()=>{const btn=document.getElementById("copy-raw-btn");if(btn){btn.textContent="✓ Copiado";btn.classList.add("copied");setTimeout(()=>{btn.textContent="Copiar";btn.classList.remove("copied");},2000);}});}
 
 // ─── Trace views ──────────────────────────────────────────────────────────────
@@ -1454,8 +1704,9 @@ function renderTraceViewer(){
   function th(col,label){return`<th class="${sortKey===col?"sorted":""}" onclick="traceSort('${col}')">${label}${sortArrow(col,sortKey,sortDir)}</th>`;}
 
   document.getElementById("content").innerHTML=`
-  <div class="toolbar">
-    <input class="search-input" placeholder="Buscar componente, método, mensaje…" value="${esc(traceViewState.search)}" oninput="traceSearchInput(this.value)">
+  <div class="toolbar toolbar-trace" style="border:1px solid #2ec4b630;border-radius:10px;padding:10px 12px;background:#2ec4b608;margin-bottom:16px;">
+    <span class="toolbar-section-label trace">◈ Log de Traza</span>
+    <input id="trace-search-input" class="search-input" placeholder="Buscar componente, método, mensaje…" value="${esc(traceViewState.search)}" oninput="traceSearchInput(this.value)" autocomplete="off">
     <select class="filter-sel" onchange="traceViewState.fComp=this.value;traceViewState.page=0;renderTraceViewer()">
       <option value="all">Todos los componentes</option>${uComps.map(v=>`<option value="${v}"${traceViewState.fComp===v?" selected":""}>${v}</option>`).join("")}
     </select>
@@ -1502,7 +1753,15 @@ function getTraceSorted(rows){
   return[...rows].sort((a,b)=>{const va=a[idx]??"",vb=b[idx]??"";return sortDir==="asc"?(va<vb?-1:va>vb?1:0):(va>vb?-1:va<vb?1:0);});
 }
 let _traceSearchTimer=null;
-function traceSearchInput(val){traceViewState.search=val;traceViewState.page=0;clearTimeout(_traceSearchTimer);_traceSearchTimer=setTimeout(renderTraceViewer,200);}
+function traceSearchInput(val){
+  traceViewState.search=val;traceViewState.page=0;
+  clearTimeout(_traceSearchTimer);
+  _traceSearchTimer=setTimeout(()=>{
+    renderTraceViewer();
+    const inp=document.getElementById("trace-search-input");
+    if(inp){inp.focus();const l=inp.value.length;inp.setSelectionRange(l,l);}
+  },150);
+}
 function traceSort(col){if(traceViewState.sortKey===col)traceViewState.sortDir=traceViewState.sortDir==="asc"?"desc":"asc";else{traceViewState.sortKey=col;traceViewState.sortDir="asc";}traceViewState.page=0;renderTraceViewer();}
 function traceGoPage(p){traceViewState.page=p;renderTraceViewer();}
 
@@ -1514,7 +1773,12 @@ zone.addEventListener("dragleave",()=>zone.classList.remove("drag"));
 zone.addEventListener("drop",e=>{e.preventDefault();zone.classList.remove("drag");handleFiles(e.dataTransfer.files);});
 fileInput.addEventListener("change",e=>handleFiles(e.target.files));
 let _rt;window.addEventListener("resize",()=>{clearTimeout(_rt);_rt=setTimeout(renderCurrentTab,200);});
-document.addEventListener("keydown",e=>{if(e.key==="Escape")document.getElementById("owner-modal").style.display="none";});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){
+    document.getElementById("owner-modal").style.display="none";
+    closeDetailModal();
+  }
+});
 
 // ─── Code protection ──────────────────────────────────────────────────────────
 (function(){
