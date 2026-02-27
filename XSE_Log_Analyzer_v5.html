@@ -926,6 +926,19 @@ function getBuckets(dc, gran, daysLimit){
   return days;
 }
 
+function getTerminalPeriodMeta(terminalName){
+  const entries=allEntries().filter(e=>e[F.vt]===terminalName);
+  if(!entries.length) return null;
+  const sorted=[...entries].sort((a,b)=>(a[F.ts]<b[F.ts]?-1:a[F.ts]>b[F.ts]?1:0));
+  const first=sorted[0], last=sorted[sorted.length-1];
+  return {
+    fromDate:first[F.date],
+    fromTime:first[F.time].slice(0,8),
+    toDate:last[F.date],
+    toTime:last[F.time].slice(0,8)
+  };
+}
+
 // ─── Build day-detail HTML ────────────────────────────────────────────────────
 function buildDayDetail(terminalName, bucket){
   const entries=allEntries().filter(e=>e[F.vt]===terminalName&&bucket.days.some(d=>d.date===e[F.date]));
@@ -1008,13 +1021,9 @@ function refreshTimeline(terminalName){
   // Update period label — compute actual date+time range from entries
   const periodEl=document.getElementById("tl-period-label");
   if(periodEl){
-    const termEntries=allEntries().filter(e=>e[F.vt]===terminalName);
-    if(termEntries.length){
-      const sortedE=[...termEntries].sort((a,b)=>(a[F.ts]<b[F.ts]?-1:a[F.ts]>b[F.ts]?1:0));
-      const first=sortedE[0], last=sortedE[sortedE.length-1];
-      const d1=first[F.date], t1=first[F.time].slice(0,8);
-      const d2=last[F.date],  t2=last[F.time].slice(0,8);
-      periodEl.innerHTML=`<span style="color:var(--teal)">${d1}</span> <span style="color:var(--dim)">${t1}</span> <span style="color:var(--mut)">→</span> <span style="color:var(--teal)">${d2}</span> <span style="color:var(--dim)">${t2}</span> <span style="color:var(--mut)">·  ${numDays} día${numDays!==1?"s":""}</span>`;
+    const period=getTerminalPeriodMeta(terminalName);
+    if(period){
+      periodEl.innerHTML=`<span style="color:var(--teal)">${period.fromDate}</span> <span style="color:var(--dim)">${period.fromTime}</span> <span style="color:var(--mut)">→</span> <span style="color:var(--teal)">${period.toDate}</span> <span style="color:var(--dim)">${period.toTime}</span> <span style="color:var(--mut)">·  ${numDays} día${numDays!==1?"s":""}</span>`;
     } else if(data.date_range){
       periodEl.textContent=`${data.date_range[0]} → ${data.date_range[1]}  ·  ${numDays} día${numDays!==1?"s":""}`;
     }
@@ -1228,14 +1237,9 @@ function renderTerminal(name){
   const buckets=getBuckets(data.day_counts, st.gran, st.daysLimit);
 
   // Compute actual first+last timestamp for period KPI
-  const termEntries=allEntries().filter(e=>e[F.vt]===name);
-  let pDate1="?", pTime1="?", pDate2="?", pTime2="?";
-  if(termEntries.length){
-    const sortedE=[...termEntries].sort((a,b)=>(a[F.ts]<b[F.ts]?-1:a[F.ts]>b[F.ts]?1:0));
-    const first=sortedE[0], last=sortedE[sortedE.length-1];
-    pDate1=first[F.date]; pTime1=first[F.time].slice(0,8);
-    pDate2=last[F.date];  pTime2=last[F.time].slice(0,8);
-  }
+  const period=getTerminalPeriodMeta(name);
+  const pDate1=period?.fromDate||"?", pTime1=period?.fromTime||"?";
+  const pDate2=period?.toDate||"?", pTime2=period?.toTime||"?";
 
   const sliderMax=numDays;
   const sliderVal=st.daysLimit||sliderMax;
@@ -1245,11 +1249,11 @@ function renderTerminal(name){
     <div class="kpi"><div class="kpi-label">Total Errores</div><div class="kpi-value" style="color:${sev.c}">${data.total.toLocaleString()}</div><div class="kpi-sub">Severidad: ${sev.l}</div></div>
     <div class="kpi"><div class="kpi-label">Período</div>
       <div style="margin-top:6px;font-family:monospace">
-        <div style="font-size:13px;color:var(--teal);font-weight:700">${pDate1}</div>
-        <div style="font-size:11px;color:var(--dim)">${pTime1}</div>
-        <div style="font-size:10px;color:var(--mut);margin:4px 0 2px">→</div>
-        <div style="font-size:13px;color:var(--teal);font-weight:700">${pDate2}</div>
-        <div style="font-size:11px;color:var(--dim)">${pTime2}</div>
+        <div style="font-size:12px;line-height:1.6">
+          <span style="color:var(--teal);font-weight:700">${pDate1}</span> <span style="color:var(--dim)">${pTime1}</span>
+          <span style="color:var(--mut);margin:0 8px">→</span>
+          <span style="color:var(--teal);font-weight:700">${pDate2}</span> <span style="color:var(--dim)">${pTime2}</span>
+        </div>
       </div>
       <div class="kpi-sub" style="margin-top:6px">${numDays} día${numDays!==1?"s":""}  ·  ${data.total} errores</div>
     </div>
@@ -1345,10 +1349,9 @@ function renderLogViewer(){
   <div class="log-table-wrap">
     <div style="overflow-x:auto">
       <table class="log-table">
-        <thead><tr>${th("date","Fecha")}${th("ts","Hora")}${th("vt","Terminal")}${th("comp","Componente")}${th("meth","Método")}${th("ec","Código")}<th>Descripción</th></tr></thead>
+        <thead><tr>${th("ts","Fecha / Hora")}${th("vt","Terminal")}${th("comp","Componente")}${th("meth","Método")}${th("ec","Código")}<th>Descripción</th></tr></thead>
         <tbody>${slice.map(e=>`<tr class="${selected===e[F.i]?"selected":""}" onclick="selectEntry(${e[F.i]})">
-          <td style="color:var(--teal);font-family:monospace;font-size:11px;white-space:nowrap">${esc(e[F.date])}</td>
-          <td style="color:var(--mut);font-family:monospace;font-size:11px;white-space:nowrap">${esc(e[F.time]).slice(0,8)}</td>
+          <td style="font-family:monospace;font-size:11px;white-space:nowrap"><span style="color:var(--teal)">${esc(e[F.date])}</span> <span style="color:var(--dim)">${esc(e[F.time]).slice(0,8)}</span></td>
           <td><span class="tag tag-vt">${esc(e[F.vt])}</span></td>
           <td class="td-comp">${esc(e[F.comp])}</td>
           <td class="td-meth" title="${esc(e[F.meth])}">${esc(e[F.meth])}</td>
