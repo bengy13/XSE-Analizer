@@ -1,0 +1,1550 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b0d14">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="XSE Logs">
+<meta name="description" content="Analizador de logs del servicio XSE de sincronización OXXO">
+<title>XSE Log Analyzer</title>
+<script>
+const manifest={name:"XSE Log Analyzer",short_name:"XSE Logs",description:"Analizador de logs del servicio XSE",start_url:"./",display:"standalone",background_color:"#0b0d14",theme_color:"#f0a500",icons:[{src:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23f0a500'/%3E%3Ctext y='72' x='50' text-anchor='middle' font-size='64' font-family='monospace' font-weight='700'%3E%E2%9F%81%3C/text%3E%3C/svg%3E",sizes:"any",type:"image/svg+xml"}]};
+const _mb=new Blob([JSON.stringify(manifest)],{type:"application/json"});
+const _ml=document.createElement("link");_ml.rel="manifest";_ml.href=URL.createObjectURL(_mb);document.currentScript.after(_ml);
+</script>
+<style>
+:root{--bg:#0b0d14;--surf:#12151f;--surf2:#181c2a;--bdr:#1e2235;--acc:#f0a500;--red:#e05252;--teal:#2ec4b6;--blue:#4a90d9;--mut:#5a607a;--txt:#d4d8e8;--dim:#8890aa;--grn:#4caf7d;--purple:#9b5de5;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;}
+::-webkit-scrollbar{width:6px;height:6px;}::-webkit-scrollbar-track{background:var(--bg);}::-webkit-scrollbar-thumb{background:#2a2e3f;border-radius:3px;}
+.app{padding:20px;}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px;}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-icon{width:38px;height:38px;background:var(--acc);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#000;font-family:monospace;font-weight:700;flex-shrink:0;}
+.logo-title{font-size:20px;font-weight:700;font-family:'Courier New',monospace;letter-spacing:-.02em;}
+.logo-title span{color:var(--acc);}
+.logo-sub{font-size:11px;color:var(--mut);margin-top:2px;}
+.status-pill{display:flex;align-items:center;gap:7px;background:var(--surf);border:1px solid var(--bdr);border-radius:20px;padding:5px 12px;}
+.status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.status-dot.active{background:var(--grn);box-shadow:0 0 8px var(--grn);}
+.status-dot.trace{background:var(--teal);box-shadow:0 0 8px var(--teal);}
+.status-dot.idle{background:var(--mut);}
+.status-text{font-size:11px;color:var(--dim);}
+.upload-area{border:2px dashed var(--bdr);border-radius:12px;padding:16px 20px;margin-bottom:16px;transition:all .2s;position:relative;}
+.upload-area:hover,.upload-area.drag{border-color:var(--acc);background:#1a140022;}
+.upload-inner{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.upload-icon{font-size:26px;flex-shrink:0;}
+.upload-texts{flex:1;min-width:180px;}
+.upload-main{font-size:13px;color:var(--txt);margin-bottom:3px;}
+.upload-main code{color:var(--acc);background:#f0a50015;padding:1px 5px;border-radius:3px;font-family:monospace;}
+.upload-hint{font-size:11px;color:var(--dim);line-height:1.5;}
+.upload-btn{background:var(--acc);border:none;border-radius:8px;padding:9px 18px;color:#000;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0;}
+.upload-btn:hover{opacity:.9;}
+.val-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:stretch;}
+.val-card{flex:1;min-width:220px;background:var(--surf);border:1px solid var(--bdr);border-radius:10px;padding:12px 16px;display:flex;gap:12px;align-items:flex-start;transition:border-color .3s;}
+.val-card.valid{border-color:var(--grn);}
+.val-card.trace{border-color:var(--teal);}
+.val-card.invalid{border-color:var(--red);}
+.val-icon{font-size:22px;flex-shrink:0;margin-top:1px;}
+.val-body{flex:1;min-width:0;}
+.val-filename{font-size:12px;font-weight:600;color:var(--txt);font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:4px;}
+.val-status{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;}
+.val-status.ok{color:var(--grn);}.val-status.tr{color:var(--teal);}.val-status.err{color:var(--red);}
+.val-detail{font-size:10px;color:var(--dim);line-height:1.5;}
+.val-checks{display:flex;flex-direction:column;gap:2px;margin-top:6px;}
+.val-check{font-size:10px;display:flex;gap:5px;align-items:center;}
+.val-check .ck{font-size:11px;}.val-check .ck.ok{color:var(--grn);}.val-check .ck.fail{color:var(--red);}
+.welcome{max-width:780px;margin:0 auto;padding:10px 0 40px;}
+.welcome-hero{text-align:center;padding:40px 20px 32px;border:1px solid var(--bdr);border-radius:14px;background:var(--surf);margin-bottom:24px;}
+.welcome-hero-icon{font-size:52px;margin-bottom:16px;}
+.welcome-hero-title{font-size:22px;font-weight:700;font-family:'Courier New',monospace;color:var(--acc);margin-bottom:8px;}
+.welcome-hero-sub{font-size:13px;color:var(--dim);line-height:1.7;max-width:500px;margin:0 auto;}
+.welcome-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:24px;}
+.step-card{background:var(--surf);border:1px solid var(--bdr);border-radius:10px;padding:18px 16px;}
+.step-num{width:26px;height:26px;border-radius:50%;background:var(--acc);color:#000;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:monospace;margin-bottom:10px;}
+.step-title{font-size:12px;font-weight:600;color:var(--txt);margin-bottom:6px;}
+.step-body{font-size:11px;color:var(--dim);line-height:1.6;}
+.step-body code{color:var(--teal);background:#2ec4b615;padding:1px 4px;border-radius:3px;font-family:monospace;}
+.tabs{display:flex;border-bottom:1px solid var(--bdr);margin-bottom:24px;overflow-x:auto;gap:0;}
+.tab-btn{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--mut);padding:10px 18px;font-size:12px;cursor:pointer;white-space:nowrap;transition:color .15s;font-family:inherit;font-weight:400;}
+.tab-btn:hover{color:var(--acc);}
+.tab-btn.active{background:var(--surf);border-bottom-color:var(--acc);color:var(--acc);font-weight:600;}
+.tab-btn.active.trace-tab{border-bottom-color:var(--teal);color:var(--teal);}
+.tab-sep{width:1px;background:var(--bdr);margin:6px 4px;flex-shrink:0;}
+.kpi-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;}
+.kpi{background:var(--surf);border:1px solid var(--bdr);border-radius:8px;padding:18px 22px;flex:1;min-width:140px;}
+.kpi-label{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--mut);margin-bottom:6px;}
+.kpi-value{font-size:32px;font-weight:700;font-family:'Courier New',monospace;line-height:1;}
+.kpi-sub{font-size:11px;color:var(--dim);margin-top:6px;}
+.sec-title{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--mut);margin:28px 0 14px;border-bottom:1px solid var(--bdr);padding-bottom:6px;}
+.chart-box{background:var(--surf);border:1px solid var(--bdr);border-radius:8px;padding:16px;margin-bottom:4px;}
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:4px;}
+canvas{display:block;}
+.tl-wrap{background:var(--surf);border:1px solid var(--bdr);border-radius:8px;padding:14px 16px;margin-bottom:4px;}
+.tl-period{font-size:11px;color:var(--teal);font-family:monospace;}
+.tl-btn{background:transparent;border:1px solid var(--bdr);border-radius:5px;color:var(--dim);font-size:10px;padding:4px 11px;cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap;}
+.tl-btn:hover{border-color:var(--acc);color:var(--acc);}
+.tl-btn.active{background:var(--acc);border-color:var(--acc);color:#000;font-weight:700;}
+.day-detail{border:1px solid var(--acc);border-left:4px solid var(--acc);border-radius:8px;margin-top:10px;overflow:hidden;animation:slideIn .15s ease;}
+@keyframes slideIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+.day-detail-hd{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;background:#0d1018;border-bottom:1px solid var(--bdr);flex-wrap:wrap;gap:8px;}
+.day-detail-date{font-size:16px;font-weight:700;font-family:'Courier New',monospace;color:var(--acc);}
+.day-detail-stat{font-size:11px;color:var(--dim);}
+.day-detail-stat strong{color:var(--txt);}
+.day-detail-close{background:transparent;border:1px solid var(--bdr);border-radius:5px;color:var(--dim);font-size:12px;cursor:pointer;padding:3px 10px;font-family:inherit;flex-shrink:0;}
+.day-chips{display:flex;gap:6px;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--bdr);background:var(--surf);}
+.day-chip{font-size:10px;border-radius:4px;padding:3px 9px;border:1px solid transparent;font-family:monospace;font-weight:600;}
+.day-table-wrap{overflow-x:auto;max-height:300px;overflow-y:auto;}
+.day-table{width:100%;border-collapse:collapse;font-size:11px;}
+.day-table th{position:sticky;top:0;z-index:1;padding:7px 12px;text-align:left;color:var(--mut);font-weight:500;font-size:10px;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--bdr);background:#0d1018;cursor:pointer;white-space:nowrap;}
+.day-table td{padding:7px 12px;border-bottom:1px solid var(--bdr);}
+.day-table tr{cursor:pointer;transition:background .1s;}
+.day-table tr:hover td{background:#181b28;}
+.err-banner{background:#1a0f0f;border:1px solid #3d1a1a;border-radius:8px;padding:14px 18px;display:flex;align-items:center;gap:12px;margin:20px 0;}
+.err-table{background:var(--surf);border:1px solid var(--bdr);border-radius:8px;overflow:hidden;width:100%;}
+.err-table table{width:100%;border-collapse:collapse;font-size:12px;}
+.err-table th{padding:10px 16px;text-align:left;color:var(--mut);font-weight:500;font-size:10px;text-transform:uppercase;letter-spacing:.1em;background:#0d1018;border-bottom:1px solid var(--bdr);}
+.err-table td{padding:10px 16px;border-bottom:1px solid var(--bdr);}
+.progress-bar{width:60px;height:4px;background:var(--bdr);border-radius:2px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:6px;}
+.progress-fill{height:100%;background:var(--acc);border-radius:2px;}
+.diag-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.diag-card{background:var(--surf);border:1px solid var(--bdr);border-radius:8px;padding:14px 16px;}
+.diag-card-hd{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.diag-card-msg{font-size:12px;color:var(--dim);line-height:1.6;}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:center;}
+.search-input,.filter-sel{background:var(--surf);border:1px solid var(--bdr);border-radius:7px;padding:8px 12px;color:var(--txt);font-size:12px;outline:none;font-family:inherit;}
+.search-input{flex:1;min-width:200px;}
+.search-input:focus,.filter-sel:focus{border-color:var(--acc);}
+.filter-sel{padding:8px 10px;font-size:11px;cursor:pointer;}
+.filter-sel option{background:#12151f;}
+.hint{font-size:11px;color:var(--mut);margin-bottom:10px;padding:6px 12px;background:var(--surf);border-radius:6px;border:1px solid var(--bdr);display:inline-block;}
+.log-table-wrap{background:var(--surf);border:1px solid var(--bdr);border-radius:8px;overflow:hidden;}
+.log-table{width:100%;border-collapse:collapse;font-size:12px;}
+.log-table th{padding:9px 12px;text-align:left;color:var(--mut);font-weight:500;font-size:10px;text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid var(--bdr);cursor:pointer;user-select:none;white-space:nowrap;background:#0d1018;}
+.log-table th:hover,.log-table th.sorted{color:var(--acc);}
+.log-table td{padding:8px 12px;border-bottom:1px solid var(--bdr);}
+.log-table tr{cursor:pointer;transition:background .1s;}
+.log-table tr:hover td{background:#181b28;}
+.log-table tr.selected td{background:#1a1f30;}
+.tag{display:inline-block;border-radius:4px;padding:2px 7px;font-size:10px;font-family:monospace;font-weight:700;}
+.tag-vt{background:#f0a50022;color:var(--acc);}
+.tag-sql26{background:#e0525222;color:var(--red);border:1px solid #e0525244;}
+.tag-app{background:#2ec4b622;color:var(--teal);border:1px solid #2ec4b644;}
+.tag-other{background:#f0a50022;color:var(--acc);border:1px solid #f0a50044;}
+.td-comp{color:var(--blue);font-family:monospace;font-size:11px;}
+.td-meth{color:var(--txt);font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.td-desc{color:var(--dim);font-size:11px;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pagination{padding:10px 16px;border-top:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;background:#0d1018;flex-wrap:wrap;gap:8px;}
+.page-info{font-size:11px;color:var(--mut);}
+.page-btns{display:flex;gap:4px;}
+.page-btn{background:transparent;border:1px solid var(--bdr);border-radius:5px;color:var(--txt);padding:4px 10px;font-size:11px;cursor:pointer;font-family:inherit;}
+.page-btn:hover:not(:disabled){background:#1e2235;}
+.page-btn:disabled{color:var(--mut);cursor:not-allowed;}
+.page-btn.active{background:var(--acc);border-color:var(--acc);color:#000;}
+.raw-panel{background:var(--surf2);border:1px solid var(--bdr);border-radius:10px;overflow:hidden;margin-top:16px;animation:slideIn .15s ease;}
+.raw-panel-hd{background:#0d1018;padding:12px 18px;border-bottom:1px solid var(--bdr);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+.raw-panel-meta{flex:1;min-width:0;}
+.raw-panel-badges{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;align-items:center;}
+.badge{font-size:10px;border-radius:4px;padding:2px 8px;font-family:monospace;border:1px solid transparent;}
+.raw-panel-method{font-family:monospace;font-size:14px;color:var(--txt);font-weight:600;margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.raw-panel-ts{font-size:11px;margin-top:2px;}
+.close-btn{background:transparent;border:1px solid var(--bdr);border-radius:6px;color:var(--dim);font-size:16px;cursor:pointer;padding:4px 10px;line-height:1;flex-shrink:0;}
+.close-btn:hover{color:var(--txt);}
+.chips-row{display:flex;flex-wrap:wrap;gap:8px;padding:10px 18px;border-bottom:1px solid var(--bdr);}
+.chip{border-radius:6px;padding:4px 10px;border:1px solid transparent;}
+.chip-lbl{font-size:9px;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;}
+.chip-val{font-size:12px;font-family:monospace;font-weight:600;}
+.err-desc-row{padding:10px 18px;border-bottom:1px solid var(--bdr);}
+.raw-content-hd{padding:8px 18px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center;background:#0d1018;}
+.raw-content-title{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;}
+.copy-btn{background:transparent;border:1px solid var(--bdr);border-radius:5px;color:var(--dim);font-size:10px;padding:3px 10px;cursor:pointer;font-family:inherit;}
+.copy-btn:hover{color:var(--txt);}.copy-btn.copied{color:var(--grn);border-color:var(--grn);}
+.raw-content-body{padding:14px 18px;max-height:300px;overflow-y:auto;}
+.raw-pre{margin:0;font-size:11px;line-height:1.8;font-family:'Courier New',monospace;color:var(--dim);white-space:pre-wrap;word-break:break-all;}
+.overlay{position:fixed;inset:0;z-index:10;background:transparent;}
+/* ─ Trace-specific ─ */
+.perf-table{background:var(--surf);border:1px solid var(--bdr);border-radius:8px;overflow:hidden;width:100%;margin-bottom:16px;}
+.perf-table table{width:100%;border-collapse:collapse;font-size:12px;}
+.perf-table th{padding:9px 14px;text-align:left;color:var(--mut);font-weight:500;font-size:10px;text-transform:uppercase;letter-spacing:.1em;background:#0d1018;border-bottom:1px solid var(--bdr);}
+.perf-table td{padding:9px 14px;border-bottom:1px solid var(--bdr);}
+.perf-table tr:last-child td{border-bottom:none;}
+.ms-bar-wrap{display:flex;align-items:center;gap:8px;}
+.ms-bar{height:6px;border-radius:3px;transition:width .3s;}
+.sched-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:20px;}
+.sched-card{background:var(--surf);border:1px solid var(--bdr);border-radius:8px;padding:14px 18px;transition:border-color .2s;}
+.sched-card:hover{border-color:var(--acc);}
+.sched-name{font-size:11px;font-family:monospace;color:var(--acc);margin-bottom:8px;font-weight:700;}
+.sched-val{font-size:26px;font-weight:700;font-family:'Courier New',monospace;color:var(--teal);}
+.sched-sub{font-size:10px;color:var(--dim);margin-top:4px;}
+.tl-sched-wrap{background:var(--surf);border:1px solid var(--bdr);border-radius:8px;padding:14px 16px;overflow-x:auto;margin-bottom:16px;}
+.msg-badge{display:inline-block;border-radius:3px;padding:1px 6px;font-size:10px;font-family:monospace;font-weight:700;border:1px solid transparent;}
+.msg-process-end{background:#4caf7d22;color:#4caf7d;border-color:#4caf7d44;}
+.msg-process-end.slow{background:#f0a50022;color:#f0a500;border-color:#f0a50044;}
+.msg-process-end.very-slow{background:#e0525222;color:#e05252;border-color:#e0525244;}
+.msg-process-start{background:#2ec4b622;color:#2ec4b6;border-color:#2ec4b644;}
+.msg-scheduler{background:#f0a50022;color:#f0a500;border-color:#f0a50044;}
+.msg-service{background:#9b5de522;color:#9b5de5;border-color:#9b5de544;}
+.msg-method{background:#1e2235;color:#5a607a;}
+.msg-other{background:#1e2235;color:#5a607a;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:640px){.two-col{grid-template-columns:1fr;}.diag-grid{grid-template-columns:1fr;}}
+.footer{text-align:center;font-size:10px;color:var(--mut);padding:20px 0 8px;border-top:1px solid var(--bdr);margin-top:40px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="logo" onclick="toggleOwnerModal()" style="cursor:pointer">
+      <div class="logo-icon">⟁</div>
+      <div><div class="logo-title">XSE <span>Log</span> Analyzer</div><div class="logo-sub">Servicio de Sincronización · OXXO</div></div>
+    </div>
+    <div class="status-pill">
+      <div class="status-dot idle" id="status-dot"></div>
+      <span class="status-text" id="status-text">Sin datos cargados</span>
+    </div>
+  </div>
+
+  <div id="owner-modal" style="display:none;position:fixed;inset:0;z-index:500;align-items:center;justify-content:center;background:#00000070">
+    <div style="background:var(--surf);border:1px solid var(--acc);border-radius:14px;padding:28px 32px;max-width:340px;width:90%;box-shadow:0 8px 40px #000000aa;position:relative;animation:slideIn .2s ease">
+      <button onclick="toggleOwnerModal()" style="position:absolute;top:12px;right:14px;background:transparent;border:none;color:var(--dim);font-size:18px;cursor:pointer;line-height:1">✕</button>
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-size:36px;margin-bottom:8px">⟁</div>
+        <div style="font-size:16px;font-weight:700;font-family:'Courier New',monospace;color:var(--acc)">XSE Log Analyzer</div>
+        <div style="font-size:11px;color:var(--mut);margin-top:3px">Servicio de Sincronización · OXXO</div>
+      </div>
+      <div style="border-top:1px solid var(--bdr);padding-top:16px">
+        <div style="font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.12em;margin-bottom:8px">Propietario del Sistema</div>
+        <div style="font-size:15px;font-weight:700;color:var(--txt);font-family:'Segoe UI',sans-serif">Ing. Benjamin Ruiz Tadeo</div>
+        <div style="font-size:11px;color:var(--dim);margin-top:4px">Todos los derechos reservados</div>
+      </div>
+      <div style="border-top:1px solid var(--bdr);margin-top:16px;padding-top:12px;font-size:10px;color:var(--mut);text-align:center">© ${new Date().getFullYear()} · Uso interno autorizado únicamente</div>
+    </div>
+  </div>
+
+  <div class="upload-area" id="upload-zone">
+    <div class="upload-inner">
+      <div class="upload-icon">📂</div>
+      <div class="upload-texts">
+        <div class="upload-main">Arrastra archivos <code>.log</code> del servicio XSE aquí</div>
+        <div class="upload-hint">Compatible con logs de <strong style="color:var(--red)">errores</strong> (Event-900) y logs de <strong style="color:var(--teal)">traza/información</strong> (Event-600 · traceProcess). Puedes mezclar tipos en la misma carga. Cada nueva carga reemplaza el análisis anterior.</div>
+      </div>
+      <label>
+        <button class="upload-btn" onclick="this.parentElement.querySelector('input').click()">Seleccionar archivos</button>
+        <input type="file" accept=".log" multiple style="display:none" id="file-input">
+      </label>
+    </div>
+  </div>
+
+  <div class="val-row" id="val-row" style="display:none"></div>
+  <div class="tabs" id="tabs" style="display:none"></div>
+  <div id="content"></div>
+  <div class="footer" id="footer">XSE Log Analyzer v7 · Desarrollado para el análisis del servicio de sincronización OXXO</div>
+</div>
+<script>
+// ─── Constants ────────────────────────────────────────────────────────────────
+const F={i:0,vt:1,date:2,time:3,ts:4,thd:5,comp:6,meth:7,ec:8,ed:9,raw:10,lineNo:11};
+const TF={i:0,date:1,time:2,ts:3,thd:4,comp:5,meth:6,msgType:7,msg:8,duration:9,raw:10,lineNo:11};
+const C={acc:"#f0a500",red:"#e05252",teal:"#2ec4b6",blue:"#4a90d9",mut:"#5a607a",txt:"#d4d8e8",dim:"#8890aa",grn:"#4caf7d",surf:"#12151f",bdr:"#1e2235",bg:"#0b0d14",purple:"#9b5de5"};
+const PIE=[C.acc,C.teal,C.blue,C.red,"#9b5de5","#00bbf9","#f15bb5"];
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let currentEntries=[], currentStats={};
+let traceEntries=[], traceStats=null;
+let activeTab="overview";
+let appMode="none"; // "none"|"error"|"trace"|"both"
+let logState={search:"",fVT:"all",fComp:"all",fErr:"all",sortKey:"ts",sortDir:"desc",page:0,selected:null,PER_PAGE:50};
+let traceViewState={search:"",fComp:"all",fType:"all",sortKey:"ts",sortDir:"asc",page:0,PER_PAGE:50};
+const tlState={};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function parseDate(s){const[d,m,y]=s.split("/");return new Date(+y,+m-1,+d);}
+function fmtDate(dt){return dt.toLocaleDateString("es-MX",{day:"2-digit",month:"2-digit",year:"numeric"});}
+function fmtDateShort(dt){return dt.toLocaleDateString("es-MX",{day:"2-digit",month:"2-digit"});}
+function allStats(){return currentStats;}
+function allEntries(){return currentEntries;}
+function hasData(){return Object.keys(currentStats).length>0;}
+function hasTrace(){return traceStats!==null;}
+function ecColor(ec){return ec==="26"?C.red:ec==="0"?C.teal:C.acc;}
+function ecTag(ec){const cls=ec==="26"?"tag-sql26":ec==="0"?"tag-app":"tag-other",lbl=ec!=="0"?`SQL-${ec}`:"App";return`<span class="tag ${cls}">${lbl}</span>`;}
+function sortArrow(col,key,dir){if(key!==col)return"<span style='color:var(--mut);margin-left:4px;font-size:10px'>↕</span>";return`<span style='color:var(--acc);margin-left:4px;font-size:10px'>${dir==="asc"?"↑":"↓"}</span>`;}
+function toggleOwnerModal(){const m=document.getElementById("owner-modal");m.style.display=m.style.display==="flex"?"none":"flex";}
+function durationColor(ms){return ms>200?C.red:ms>50?C.acc:C.grn;}
+function msClass(ms){return ms>200?"very-slow":ms>50?"slow":"";}
+
+// ─── Validation ───────────────────────────────────────────────────────────────
+function detectLogType(text){
+  const first=text.slice(0,500);
+  if(/Information\tEvent-600/.test(first)) return "trace";
+  if(/Error\tEvent-\d+/.test(first)) return "error";
+  // Fallback: check more of file
+  if(/Information\tEvent-600/.test(text)) return "trace";
+  if(/Error\tEvent-\d+/.test(text)) return "error";
+  return "unknown";
+}
+
+function validateError(text){
+  const entryMatches=(text.match(/Error\tEvent-900\s+\d{2}\/\d{2}\/\d{4}/g)||[]).length;
+  const checks={
+    formato:{label:"Formato Error·Event-900 DD/MM/YYYY (thd-N)",ok:/Error\tEvent-\d+\s+\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}:\d{2}\.\d+\s+\(thd-\d+\)\t/.test(text)},
+    namespace:{label:"Namespace Oxxo.Services.XSE.*",ok:/Oxxo\.Services\.XSE\./.test(text)},
+    metodo:{label:"Llamadas XSE DataAccess.DAO/Conn",ok:/Oxxo\.Services\.XSE\.DataAccess\.(DAO|Conn)\./.test(text)},
+    componentes:{label:"Componentes XSE conocidos",ok:/\b(SyncDAO|StatusDAO|MachineDAO|ConfigDAO|ExecuteTaskDomain)\b/.test(text)},
+    entradas:{label:`Entradas parseables (${entryMatches})`,ok:entryMatches>=1},
+  };
+  const isValid=checks.formato.ok&&checks.namespace.ok&&checks.metodo.ok;
+  return{checks,isValid,entryMatches,type:"error"};
+}
+
+function validateTrace(text){
+  const infoMatches=(text.match(/Information\tEvent-600\s+\d{2}\/\d{2}\/\d{4}/g)||[]).length;
+  const checks={
+    formato:{label:"Formato Information·Event-600 DD/MM/YYYY",ok:infoMatches>=1},
+    componentes:{label:"Componentes XSE conocidos",ok:/\b(ConfigDomain|MachineDAO|StatusDAO|ExecuteTaskDomain|CloseTransDomain|SyncDAO)\b/.test(text)},
+    scheduler:{label:"Eventos de scheduler detectados",ok:/Scheduler\w+Task/.test(text)},
+  };
+  const isValid=checks.formato.ok&&checks.componentes.ok;
+  return{checks,isValid,infoMatches,type:"trace"};
+}
+
+// ─── Error translations ───────────────────────────────────────────────────────
+const ERR_TRANSLATIONS=[
+  {match:/Login failed for user/i,short:"Fallo de autenticación en base de datos",detail:"El usuario xse.service.account no tiene permisos para conectarse a SQL Server.",color:C.acc,icon:"🔐"},
+  {match:/Error al buscar el servidor|error: 26/i,short:"Servidor de base de datos no encontrado",detail:"El servicio XSE no puede localizar el servidor SQL Server en la red.",color:C.red,icon:"🔌"},
+  {match:/El nombre de red especificado ya no está disponible/i,short:"Conexión de red interrumpida",detail:"La conexión TCP/IP con SQL Server se perdió abruptamente durante la operación.",color:C.red,icon:"📡"},
+  {match:/Timeout expired|tiempo de espera agotado/i,short:"Tiempo de espera agotado",detail:"SQL Server no respondió en el tiempo configurado.",color:C.acc,icon:"⏱"},
+];
+function getErrTranslation(ed,raw){return ERR_TRANSLATIONS.find(t=>t.match.test(ed)||t.match.test(raw))||null;}
+function hasLoginFailed(raw){return/Login failed for user 'xse\.service\.account'/i.test(raw);}
+
+// ─── Error log parser ─────────────────────────────────────────────────────────
+function parseErrorText(name,text){
+  const ERR_RE=/error: (\d+) - ([^)\n]{1,80})/i;
+  const dc={},cc={},mc={},ec_c={};let total=0;const entries=[];
+  const norm=text.replace(/\r\n/g,"\n").replace(/\r/g,"\n");
+  const lines=norm.split("\n");
+  const lineOffsets=[0];
+  for(let i=0;i<lines.length;i++) lineOffsets.push(lineOffsets[i]+lines[i].length+1);
+  function charToLine(offset){let lo=0,hi=lineOffsets.length-1;while(lo<hi){const mid=(lo+hi+1)>>1;if(lineOffsets[mid]<=offset)lo=mid;else hi=mid-1;}return lo+1;}
+  const parts=norm.split(/(?=Error\tEvent-)/).filter(Boolean);
+  let charOffset=0;
+  parts.forEach(raw=>{
+    const hm=raw.match(/Error\tEvent-\d+\s+(\d{2}\/\d{2}\/\d{4})\s+(\d{2}:\d{2}:\d{2}\.\d+)\s+\(thd-(\d+)\)\t(\w+)\s+(\S+)/);
+    const lineNo=charToLine(charOffset);
+    charOffset+=raw.length;
+    if(!hm)return;total++;
+    const[,date,time_s,thd,comp,meth]=hm;
+    const em=ERR_RE.exec(raw);
+    const loginFailed=hasLoginFailed(raw);
+    let ec_v,ed_v;
+    if(loginFailed&&!em){ec_v="login";ed_v="Login failed for user 'xse.service.account'.";}
+    else{ec_v=em?em[1]:"0";ed_v=em?em[2].trim().slice(0,60):(raw.split("\n")[0].split(meth)[1]||"").replace(/\{[^}]+\}/g,"").trim().slice(0,60)||"Ver detalle";}
+    dc[date]=(dc[date]||0)+1;cc[comp]=(cc[comp]||0)+1;mc[meth]=(mc[meth]||0)+1;ec_c[ed_v]=(ec_c[ed_v]||0)+1;
+    const rawLines=raw.split("\n").map(l=>l.trim()).filter(Boolean);
+    const nonSt=rawLines.filter(l=>!l.startsWith("en "));
+    const st=rawLines.filter(l=>l.startsWith("en "));
+    const neat=nonSt.join("\n")+(st.length?"\n\nStack trace:\n"+st.join("\n"):"");
+    const[d,mo,y]=date.split("/");
+    entries.push([entries.length,name,date,time_s,`${y}-${mo}-${d}T${time_s}`,thd,comp,meth,ec_v,ed_v,neat.slice(0,700),lineNo]);
+  });
+  const toISO=d=>{const[dd,mm,yy]=d.split("/");return`${yy}-${mm}-${dd}`;};
+  const dates=Object.keys(dc).sort((a,b)=>toISO(a)<toISO(b)?-1:1);
+  return{stats:{total,date_range:dates.length?[dates[0],dates[dates.length-1]]:["?","?"],day_counts:dc,comp_counts:Object.fromEntries(Object.entries(cc).sort((a,b)=>b[1]-a[1])),method_counts:Object.fromEntries(Object.entries(mc).sort((a,b)=>b[1]-a[1])),err_counts:Object.fromEntries(Object.entries(ec_c).sort((a,b)=>b[1]-a[1]))},entries};
+}
+
+// ─── Trace log parser ─────────────────────────────────────────────────────────
+function parseTraceText(text){
+  const norm=text.replace(/\r\n/g,"\n").replace(/\r/g,"\n");
+  const lines=norm.split("\n");
+  const entries=[];
+  const compCounts={},methCounts={},hourCounts={},minuteCounts={};
+  const processDurations={}; // meth -> {count,totalMs,maxMs,minMs,samples}
+  const schedulerJobs={};    // "SchedulerXxx" -> [{ts,thd,time,date}]
+  const threadSet=new Set();
+  let firstTs=null,lastTs=null,firstDate="",lastDate="",firstTime="",lastTime="";
+  let serviceEvents=[],configLoads=0,newTaskSleep=0;
+
+  lines.forEach((rawLine,lineIdx)=>{
+    const line=rawLine.trim();
+    if(!line)return;
+    const m=line.match(/^Information\tEvent-\d+\s+(\d{2}\/\d{2}\/\d{4})\s+(\d{2}:\d{2}:\d{2}\.\d+)\s+\(thd-(\d+)\)\t(\w+)\s+(\S+)\s+(.*)/);
+    if(!m)return;
+    const[,date,time,thd,comp,meth,msgRaw]=m;
+    const msg=msgRaw.trim();
+    const[d,mo,y]=date.split("/");
+    const ts=`${y}-${mo}-${d}T${time}`;
+
+    if(!firstTs||ts<firstTs){firstTs=ts;firstDate=date;firstTime=time.slice(0,8);}
+    if(!lastTs||ts>lastTs){lastTs=ts;lastDate=date;lastTime=time.slice(0,8);}
+
+    threadSet.add(thd);
+    compCounts[comp]=(compCounts[comp]||0)+1;
+    methCounts[meth]=(methCounts[meth]||0)+1;
+    const hour=time.slice(0,2);
+    const minute=time.slice(0,5);
+    hourCounts[hour]=(hourCounts[hour]||0)+1;
+    minuteCounts[minute]=(minuteCounts[minute]||0)+1;
+
+    let msgType,duration=null;
+    if(msg.includes("[Proceso Terminado]")){
+      msgType="process_end";
+      const dm=msg.match(/,\s*(\d+)\s*milisegundos/);
+      if(dm){
+        duration=parseInt(dm[1]);
+        if(!processDurations[meth])processDurations[meth]={count:0,totalMs:0,maxMs:0,minMs:Infinity,samples:[]};
+        const pd=processDurations[meth];
+        pd.count++;pd.totalMs+=duration;
+        if(duration>pd.maxMs)pd.maxMs=duration;
+        if(duration<pd.minMs)pd.minMs=duration;
+        if(pd.samples.length<200)pd.samples.push({ts,ms:duration,thd,time:time.slice(0,8)});
+      }
+    } else if(msg.includes("[Iniciando Proceso]")){
+      msgType="process_start";
+    } else if(msg.startsWith("INICIO DE METODO")){
+      msgType="method_start";
+    } else if(msg.startsWith("FIN DE METODO")){
+      msgType="method_end";
+    } else if(/^Scheduler\w+/.test(msg)){
+      msgType="scheduler";
+      const jobName=msg.trim();
+      if(!schedulerJobs[jobName])schedulerJobs[jobName]=[];
+      schedulerJobs[jobName].push({ts,thd,time:time.slice(0,5),date});
+    } else if(msg==="SERVICIO XSE APAGADO"){
+      msgType="service_stop";
+      serviceEvents.push({type:"stop",ts,time:time.slice(0,8),date,msg});
+    } else if(/JobInit|Iniciando endpoint|ReadStartupConfiguration/.test(msg)){
+      msgType="service_start";
+      serviceEvents.push({type:"start",ts,time:time.slice(0,8),date,msg});
+    } else if(msg==="Load configurations"){
+      msgType="config";
+      configLoads++;
+    } else if(msg.includes("NewTask apagado")){
+      msgType="task";
+      newTaskSleep++;
+    } else {
+      msgType="other";
+    }
+
+    entries.push([
+      entries.length,date,time,ts,thd,comp,meth,msgType,
+      msg.slice(0,120),duration,rawLine.slice(0,400),lineIdx+1
+    ]);
+  });
+
+  return{
+    total:entries.length,entries,firstTs,lastTs,firstDate,lastDate,firstTime,lastTime,
+    threads:[...threadSet],compCounts,methCounts,hourCounts,minuteCounts,
+    processDurations,schedulerJobs,serviceEvents,configLoads,newTaskSleep,
+  };
+}
+
+// ─── File handling ────────────────────────────────────────────────────────────
+function handleFiles(files){
+  const fileList=Array.from(files);if(!fileList.length)return;
+  const pending={done:0,total:fileList.length,results:[],newStats:{},newEntries:[],traceEntries:[],traceStatsArr:[]};
+
+  fileList.forEach(f=>{
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const text=ev.target.result;
+      const logType=detectLogType(text);
+
+      if(logType==="error"){
+        const validation=validateError(text);
+        const name=f.name.replace(/\.log$/,"").split("_").pop().toUpperCase();
+        if(validation.isValid){
+          const{stats,entries}=parseErrorText(name,text);
+          const offset=pending.newEntries.length;
+          pending.newStats[name]=stats;
+          pending.newEntries.push(...entries.map((row,i)=>{const r=row.slice();r[F.i]=offset+i;return r;}));
+          pending.results.push({filename:f.name,validation,entries:entries.length,logType:"error"});
+        } else {
+          pending.results.push({filename:f.name,validation,entries:0,logType:"error"});
+        }
+      } else if(logType==="trace"){
+        const validation=validateTrace(text);
+        if(validation.isValid){
+          const parsed=parseTraceText(text);
+          pending.traceEntries.push(...parsed.entries.map((row,i)=>{const r=row.slice();r[TF.i]=pending.traceEntries.length+i;return r;}));
+          pending.traceStatsArr.push(parsed);
+          pending.results.push({filename:f.name,validation,entries:parsed.total,logType:"trace"});
+        } else {
+          pending.results.push({filename:f.name,validation,entries:0,logType:"trace"});
+        }
+      } else {
+        pending.results.push({filename:f.name,validation:{isValid:false,checks:{},type:"unknown"},entries:0,logType:"unknown"});
+      }
+
+      pending.done++;
+      if(pending.done===pending.total){
+        // Merge results
+        currentStats=pending.newStats;
+        currentEntries=pending.newEntries;
+        logState={search:"",fVT:"all",fComp:"all",fErr:"all",sortKey:"ts",sortDir:"desc",page:0,selected:null,PER_PAGE:50};
+        traceViewState={search:"",fComp:"all",fType:"all",sortKey:"ts",sortDir:"asc",page:0,PER_PAGE:50};
+        Object.keys(tlState).forEach(k=>delete tlState[k]);
+
+        // Merge trace files
+        if(pending.traceStatsArr.length>0){
+          traceEntries=pending.traceEntries;
+          traceStats=mergeTraceStats(pending.traceStatsArr);
+        } else {
+          traceEntries=[];traceStats=null;
+        }
+
+        // Determine mode
+        const hasErr=Object.keys(currentStats).length>0;
+        const hasTr=traceStats!==null;
+        if(hasErr&&hasTr) appMode="both";
+        else if(hasErr) appMode="error";
+        else if(hasTr) appMode="trace";
+        else appMode="none";
+
+        // Set default active tab
+        if(appMode==="trace"||appMode==="both") activeTab="t-resumen";
+        else if(appMode==="error") activeTab="overview";
+
+        renderValidationCards(pending.results);
+
+        const dot=document.getElementById("status-dot");
+        const stxt=document.getElementById("status-text");
+        if(appMode==="trace"){
+          dot.className="status-dot trace";
+          stxt.textContent=`${traceStats.total.toLocaleString()} eventos · Log de traza`;
+        } else if(appMode==="error"){
+          dot.className="status-dot active";
+          stxt.textContent=`${currentEntries.length.toLocaleString()} entradas · ${Object.keys(currentStats).length} terminal(es)`;
+        } else if(appMode==="both"){
+          dot.className="status-dot active";
+          stxt.textContent=`Errores + Traza cargados`;
+        } else {
+          dot.className="status-dot idle";
+          stxt.textContent=`Sin datos válidos`;
+        }
+
+        buildTabs();renderCurrentTab();
+        document.getElementById("file-input").value="";
+      }
+    };
+    reader.readAsText(f);
+  });
+}
+
+function mergeTraceStats(arr){
+  if(arr.length===1)return{...arr[0],entries:traceEntries};
+  // Merge multiple trace parsed objects
+  const merged={total:0,firstTs:null,lastTs:null,firstDate:"",lastDate:"",firstTime:"",lastTime:"",threads:[],compCounts:{},methCounts:{},hourCounts:{},minuteCounts:{},processDurations:{},schedulerJobs:{},serviceEvents:[],configLoads:0,newTaskSleep:0};
+  arr.forEach(s=>{
+    merged.total+=s.total;
+    if(!merged.firstTs||s.firstTs<merged.firstTs){merged.firstTs=s.firstTs;merged.firstDate=s.firstDate;merged.firstTime=s.firstTime;}
+    if(!merged.lastTs||s.lastTs>merged.lastTs){merged.lastTs=s.lastTs;merged.lastDate=s.lastDate;merged.lastTime=s.lastTime;}
+    merged.threads.push(...s.threads);
+    Object.entries(s.compCounts).forEach(([k,v])=>merged.compCounts[k]=(merged.compCounts[k]||0)+v);
+    Object.entries(s.methCounts).forEach(([k,v])=>merged.methCounts[k]=(merged.methCounts[k]||0)+v);
+    Object.entries(s.hourCounts).forEach(([k,v])=>merged.hourCounts[k]=(merged.hourCounts[k]||0)+v);
+    Object.entries(s.minuteCounts).forEach(([k,v])=>merged.minuteCounts[k]=(merged.minuteCounts[k]||0)+v);
+    Object.entries(s.processDurations).forEach(([k,pd])=>{
+      if(!merged.processDurations[k])merged.processDurations[k]={count:0,totalMs:0,maxMs:0,minMs:Infinity,samples:[]};
+      const mp=merged.processDurations[k];
+      mp.count+=pd.count;mp.totalMs+=pd.totalMs;
+      if(pd.maxMs>mp.maxMs)mp.maxMs=pd.maxMs;
+      if(pd.minMs<mp.minMs)mp.minMs=pd.minMs;
+      mp.samples.push(...pd.samples.slice(0,50));
+    });
+    Object.entries(s.schedulerJobs).forEach(([k,v])=>{
+      if(!merged.schedulerJobs[k])merged.schedulerJobs[k]=[];
+      merged.schedulerJobs[k].push(...v);
+    });
+    merged.serviceEvents.push(...s.serviceEvents);
+    merged.configLoads+=s.configLoads;
+    merged.newTaskSleep+=s.newTaskSleep;
+  });
+  merged.threads=[...new Set(merged.threads)];
+  // Sort scheduler job entries by ts
+  Object.keys(merged.schedulerJobs).forEach(k=>merged.schedulerJobs[k].sort((a,b)=>a.ts<b.ts?-1:1));
+  merged.entries=traceEntries;
+  return merged;
+}
+
+// ─── Validation cards ─────────────────────────────────────────────────────────
+function renderValidationCards(results){
+  const row=document.getElementById("val-row");
+  if(!results.length){row.style.display="none";return;}
+  row.style.display="flex";
+  row.innerHTML=results.map(r=>{
+    const v=r.validation;
+    const isTrace=r.logType==="trace";
+    const cardClass=v.isValid?(isTrace?"trace":"valid"):"invalid";
+    const statusClass=v.isValid?(isTrace?"tr":"ok"):"err";
+    const statusLabel=v.isValid?(isTrace?"✓ Log de Traza":"✓ Log de Errores"):"✗ No reconocido";
+    const icon=v.isValid?(isTrace?"📊":"⚠️"):"❌";
+    const checksHtml=v.checks?Object.entries(v.checks).map(([,c])=>`<div class="val-check"><span class="ck ${c.ok?"ok":"fail"}">${c.ok?"✓":"✗"}</span><span style="color:var(--dim)">${c.label}</span></div>`).join(""):"";
+    return`<div class="val-card ${cardClass}">
+      <div class="val-icon">${icon}</div>
+      <div class="val-body">
+        <div class="val-filename">${esc(r.filename)}</div>
+        <div class="val-status ${statusClass}">${statusLabel}</div>
+        <div class="val-detail">${v.isValid?`${r.entries.toLocaleString()} entradas procesadas`:"Formato no reconocido como log XSE"}</div>
+        <div class="val-checks">${checksHtml}</div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// ─── Tab system ───────────────────────────────────────────────────────────────
+function buildTabs(){
+  if(appMode==="none"){document.getElementById("tabs").style.display="none";return;}
+  document.getElementById("tabs").style.display="flex";
+  const defs=[];
+  if(appMode==="error"||appMode==="both"){
+    defs.push({id:"overview",l:"◈ Vista General",trace:false});
+    Object.keys(currentStats).forEach(k=>defs.push({id:k,l:`⬡ Terminal ${k}`,trace:false}));
+    defs.push({id:"logs",l:"☰ Visor Errores",trace:false});
+  }
+  if((appMode==="error"||appMode==="both")&&appMode==="both") defs.push({sep:true});
+  if(appMode==="trace"||appMode==="both"){
+    defs.push({id:"t-resumen",l:"◈ Resumen",trace:true});
+    defs.push({id:"t-rendimiento",l:"⚡ Rendimiento",trace:true});
+    defs.push({id:"t-schedulers",l:"🕐 Schedulers",trace:true});
+    defs.push({id:"t-actividad",l:"📈 Actividad",trace:true});
+    defs.push({id:"t-visor",l:"☰ Visor Traza",trace:true});
+  }
+  document.getElementById("tabs").innerHTML=defs.map(t=>{
+    if(t.sep)return`<div class="tab-sep"></div>`;
+    return`<button class="tab-btn ${activeTab===t.id?"active":""} ${t.trace?"trace-tab":""}" onclick="switchTab('${t.id}')">${t.l}</button>`;
+  }).join("");
+}
+function switchTab(id){activeTab=id;if(id!=="logs")logState.selected=null;buildTabs();renderCurrentTab();}
+function renderCurrentTab(){
+  if(appMode==="none"){renderWelcome();return;}
+  const t=activeTab;
+  if(t==="overview")renderOverview();
+  else if(t==="logs")renderLogViewer();
+  else if(t==="t-resumen")renderTraceResumen();
+  else if(t==="t-rendimiento")renderTraceRendimiento();
+  else if(t==="t-schedulers")renderTraceSchedulers();
+  else if(t==="t-actividad")renderTraceActividad();
+  else if(t==="t-visor")renderTraceViewer();
+  else if(currentStats[t])renderTerminal(t);
+}
+
+// ─── Welcome ──────────────────────────────────────────────────────────────────
+function renderWelcome(){
+  document.getElementById("content").innerHTML=`
+  <div class="welcome">
+    <div class="welcome-hero">
+      <div class="welcome-hero-icon">⟁</div>
+      <div class="welcome-hero-title">XSE Log Analyzer</div>
+      <div class="welcome-hero-sub">Análisis inteligente de logs del servicio de sincronización OXXO. Compatible con logs de <strong style="color:var(--red)">errores</strong> y logs de <strong style="color:var(--teal)">traza/información</strong>.</div>
+    </div>
+    <div class="welcome-steps">
+      <div class="step-card"><div class="step-num">1</div><div class="step-title">Logs de Errores</div><div class="step-body">Archivos <code>error_XSE_*.log</code> — Análisis de fallos SQL, autenticación y conectividad. El nombre determina el ID del terminal.</div></div>
+      <div class="step-card"><div class="step-num">2</div><div class="step-title">Logs de Traza</div><div class="step-body">Archivos <code>traceProcess*.log</code> — Análisis de rendimiento, ciclos del scheduler, actividad por hora y componentes.</div></div>
+      <div class="step-card"><div class="step-num">3</div><div class="step-title">Carga Mixta</div><div class="step-body">Puedes cargar ambos tipos simultáneamente. El sistema detecta el formato automáticamente y presenta pestañas separadas.</div></div>
+    </div>
+  </div>`;
+}
+
+// ─── Charts ───────────────────────────────────────────────────────────────────
+function drawBarMeta(id,meta){
+  const cv=document.getElementById(id);if(!cv)return;
+  const ctx=cv.getContext("2d");
+  const W=cv.offsetWidth||cv.width;cv.width=W;cv.height=cv.offsetHeight||cv.height;
+  const H=cv.height,pad={t:36,r:20,b:56,l:50};
+  const cW=W-pad.l-pad.r,cH=H-pad.t-pad.b;
+  ctx.clearRect(0,0,W,H);
+  if(!meta.length)return;
+  const values=meta.map(m=>m.total),max=Math.max(...values,1),n=meta.length;
+  const step=cW/n,bW=Math.min(80,Math.max(30,step*0.65));
+  ctx.strokeStyle=C.bdr;ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){const y=pad.t+cH*(1-i/4);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();ctx.fillStyle=C.mut;ctx.font="10px monospace";ctx.textAlign="right";ctx.fillText(Math.round(max*i/4),pad.l-5,y+4);}
+  meta.forEach((m,i)=>{
+    const x=pad.l+step*i+step/2-bW/2,bH=Math.max(2,(m.total/max)*cH),y=pad.t+cH-bH;
+    ctx.fillStyle=C.acc;ctx.globalAlpha=0.9;ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,y,bW,bH,3);else ctx.rect(x,y,bW,bH);ctx.fill();ctx.globalAlpha=1;
+    ctx.fillStyle=C.acc;ctx.font="bold 11px monospace";ctx.textAlign="center";ctx.fillText(m.total.toLocaleString(),x+bW/2,y-4);
+    ctx.fillStyle="#e0e4f0";ctx.font="bold 11px sans-serif";ctx.textAlign="center";ctx.fillText(m.name,x+bW/2,H-pad.b+14);
+    ctx.fillStyle=C.teal;ctx.font="9px monospace";ctx.textAlign="center";ctx.fillText(m.d1,x+bW/2,H-pad.b+26);
+    ctx.fillStyle=C.dim;ctx.font="9px monospace";ctx.fillText(m.d2,x+bW/2,H-pad.b+38);
+    if(bH>22){ctx.fillStyle="#00000055";ctx.font="9px monospace";ctx.textAlign="center";ctx.fillText(`${m.numDays}d`,x+bW/2,y+bH/2+4);}
+  });
+}
+
+function drawHBar(id,labels,values,color){
+  const cv=document.getElementById(id);if(!cv)return;
+  const ctx=cv.getContext("2d");
+  const W=cv.offsetWidth||cv.width;cv.width=W;cv.height=cv.offsetHeight||cv.height;
+  const H=cv.height,lW=170,pad={t:8,r:24,b:8,l:lW};
+  const cW=W-pad.l-pad.r,cH=H-pad.t-pad.b;
+  ctx.clearRect(0,0,W,H);
+  if(!values.length)return;
+  const max=Math.max(...values,1),bH=Math.max(4,cH/values.length*0.55),step=cH/values.length;
+  values.forEach((v,i)=>{
+    const y=pad.t+step*i+step/2-bH/2,bw=(v/max)*cW;
+    ctx.fillStyle=color+"44";ctx.fillRect(pad.l,y,cW,bH);
+    ctx.fillStyle=color;ctx.beginPath();if(ctx.roundRect)ctx.roundRect(pad.l,y,bw,bH,2);else ctx.rect(pad.l,y,bw,bH);ctx.fill();
+    ctx.fillStyle=C.dim;ctx.font="10px sans-serif";ctx.textAlign="right";
+    const s=labels[i]||"",sh=s.length>26?s.slice(0,26)+"…":s;
+    ctx.fillText(sh,pad.l-6,y+bH/2+4);
+    ctx.fillStyle=C.mut;ctx.font="10px monospace";ctx.textAlign="left";ctx.fillText(v,pad.l+bw+4,y+bH/2+4);
+  });
+}
+
+// Hourly activity bar chart (0-23)
+function drawHourBar(id,hourCounts){
+  const cv=document.getElementById(id);if(!cv)return;
+  const ctx=cv.getContext("2d");
+  const W=cv.offsetWidth||600;cv.width=W;cv.height=cv.offsetHeight||180;
+  const H=cv.height,pad={t:20,r:16,b:32,l:44};
+  const cW=W-pad.l-pad.r,cH=H-pad.t-pad.b;
+  ctx.clearRect(0,0,W,H);
+  const hours=Array.from({length:24},(_,i)=>String(i).padStart(2,"0"));
+  const values=hours.map(h=>hourCounts[h]||0);
+  const max=Math.max(...values,1);
+  const bW=cW/24*0.75,gap=cW/24;
+  // Grid
+  ctx.strokeStyle=C.bdr;ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){const y=pad.t+cH*(1-i/4);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();ctx.fillStyle=C.mut;ctx.font="9px monospace";ctx.textAlign="right";ctx.fillText(Math.round(max*i/4),pad.l-4,y+4);}
+  hours.forEach((h,i)=>{
+    const x=pad.l+gap*i+gap/2-bW/2;
+    const v=values[i],bH=Math.max(1,(v/max)*cH),y=pad.t+cH-bH;
+    const clr=v===Math.max(...values)?C.acc:C.teal;
+    ctx.fillStyle=clr+"cc";ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,y,bW,bH,2);else ctx.rect(x,y,bW,bH);ctx.fill();
+    if(i%3===0||i===23){ctx.fillStyle=C.dim;ctx.font="9px monospace";ctx.textAlign="center";ctx.fillText(h+"h",x+bW/2,H-pad.b+12);}
+  });
+  // Peak label
+  const peakHour=hours[values.indexOf(Math.max(...values))];
+  ctx.fillStyle=C.acc;ctx.font="bold 10px monospace";ctx.textAlign="center";
+  ctx.fillText(`Pico: ${peakHour}:00 (${Math.max(...values).toLocaleString()} eventos)`,W/2,12);
+}
+
+// Duration horizontal bar (performance)
+function drawDurationHBar(id,labels,avgs,maxes){
+  const cv=document.getElementById(id);if(!cv)return;
+  const ctx=cv.getContext("2d");
+  const W=cv.offsetWidth||600;cv.width=W;
+  const rowH=32,pad={t:10,r:80,b:10,l:240};
+  cv.height=rowH*labels.length+pad.t+pad.b;
+  const H=cv.height,cW=W-pad.l-pad.r;
+  ctx.clearRect(0,0,W,H);
+  const maxVal=Math.max(...maxes,1);
+  labels.forEach((lbl,i)=>{
+    const y=pad.t+i*rowH;
+    const avgW=(avgs[i]/maxVal)*cW,maxW=(maxes[i]/maxVal)*cW;
+    // Max bar (background)
+    ctx.fillStyle=C.bdr;ctx.fillRect(pad.l,y+8,cW,14);
+    // Max bar fill
+    ctx.fillStyle=durationColor(maxes[i])+"66";ctx.fillRect(pad.l,y+8,maxW,14);
+    // Avg bar
+    ctx.fillStyle=durationColor(avgs[i]);ctx.fillRect(pad.l,y+10,avgW,10);
+    // Label
+    ctx.fillStyle=C.dim;ctx.font="10px sans-serif";ctx.textAlign="right";
+    const short=lbl.length>32?lbl.slice(0,32)+"…":lbl;
+    ctx.fillText(short,pad.l-6,y+20);
+    // Value
+    ctx.fillStyle=durationColor(avgs[i]);ctx.font="bold 10px monospace";ctx.textAlign="left";
+    ctx.fillText(`${avgs[i]}ms avg`,pad.l+avgW+4,y+20);
+  });
+}
+
+// Scheduler timeline dot chart
+function drawSchedTimeline(id,schedulerJobs,firstTime,lastTime){
+  const cv=document.getElementById(id);if(!cv)return;
+  const ctx=cv.getContext("2d");
+  const W=cv.offsetWidth||700;cv.width=W;
+  const jobKeys=Object.keys(schedulerJobs).sort();
+  const rowH=36,pad={t:16,r:20,b:24,l:200};
+  cv.height=rowH*jobKeys.length+pad.t+pad.b;
+  const H=cv.height,cW=W-pad.l-pad.r;
+  ctx.clearRect(0,0,W,H);
+
+  // Parse time range
+  function timeToMin(t){const parts=t.split(":");const h=parseInt(parts[0]),m=parseInt(parts[1]||0);return h*60+m;}
+  // Get all timestamps to find range
+  const allTimes=Object.values(schedulerJobs).flat().map(e=>e.time);
+  if(!allTimes.length)return;
+  let minT=timeToMin(allTimes[0]),maxT=timeToMin(allTimes[0]);
+  allTimes.forEach(t=>{const m=timeToMin(t);if(m<minT)minT=m;if(m>maxT)maxT=m;});
+  const range=Math.max(maxT-minT,60);
+
+  // Hour labels
+  ctx.fillStyle=C.mut;ctx.font="9px monospace";
+  for(let h=Math.floor(minT/60);h<=Math.ceil(maxT/60);h++){
+    const x=pad.l+((h*60-minT)/range)*cW;
+    if(x>=pad.l&&x<=W-pad.r){
+      ctx.textAlign="center";ctx.fillText(String(h%24).padStart(2,"0")+"h",x,H-8);
+      ctx.strokeStyle=C.bdr;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,pad.t);ctx.lineTo(x,H-pad.b);ctx.stroke();
+    }
+  }
+
+  jobKeys.forEach((job,ri)=>{
+    const y=pad.t+ri*rowH;
+    const shortName=job.replace("Scheduler","").replace("Task","");
+    // Row label
+    ctx.fillStyle=C.dim;ctx.font="10px monospace";ctx.textAlign="right";
+    ctx.fillText(shortName,pad.l-8,y+rowH/2+4);
+    // Row line
+    ctx.strokeStyle=C.bdr;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pad.l,y+rowH/2);ctx.lineTo(W-pad.r,y+rowH/2);ctx.stroke();
+    // Dots for each execution
+    schedulerJobs[job].forEach(ev=>{
+      const tm=timeToMin(ev.time);
+      const x=pad.l+((tm-minT)/range)*cW;
+      ctx.fillStyle=C.acc;ctx.beginPath();ctx.arc(x,y+rowH/2,4,0,Math.PI*2);ctx.fill();
+    });
+  });
+}
+
+// ─── Error log views (unchanged from v6) ─────────────────────────────────────
+function getTlState(name){if(!tlState[name])tlState[name]={gran:"day",selectedIdx:null,daysLimit:0};return tlState[name];}
+function aggregateDays(dc){return Object.entries(dc).sort((a,b)=>parseDate(a[0])-parseDate(b[0])).map(([date,count])=>({key:date,label:date,shortLabel:date.slice(0,5),count,days:[{date,count}]}));}
+function aggregateWeeks(dc){
+  const sorted=Object.entries(dc).sort((a,b)=>parseDate(a[0])-parseDate(b[0]));
+  const weeks=[];
+  sorted.forEach(([date,count])=>{
+    const dt=parseDate(date),mon=new Date(dt);mon.setDate(dt.getDate()-((dt.getDay()+6)%7));
+    const wkey=`${String(mon.getDate()).padStart(2,"0")}/${String(mon.getMonth()+1).padStart(2,"0")}/${mon.getFullYear()}`;
+    let w=weeks.find(x=>x.key===wkey);
+    if(!w){const sun=new Date(mon);sun.setDate(mon.getDate()+6);w={key:wkey,label:`${fmtDate(mon)} – ${fmtDate(sun)}`,shortLabel:`${fmtDateShort(mon)}-${fmtDateShort(sun)}`,count:0,days:[]};weeks.push(w);}
+    w.count+=count;w.days.push({date,count});
+  });
+  return weeks;
+}
+function aggregateMonths(dc){
+  const sorted=Object.entries(dc).sort((a,b)=>parseDate(a[0])-parseDate(b[0]));
+  const months=[];
+  const MN=["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+  sorted.forEach(([date,count])=>{
+    const[d,m,y]=date.split("/"),mkey=`${m}/${y}`;
+    let mo=months.find(x=>x.key===mkey);
+    if(!mo){mo={key:mkey,label:`${MN[+m-1]} ${y}`,shortLabel:`${MN[+m-1]} ${y.slice(2)}`,count:0,days:[]};months.push(mo);}
+    mo.count+=count;mo.days.push({date,count});
+  });
+  return months;
+}
+function getBuckets(dc,gran,daysLimit){
+  const all=gran==="week"?aggregateWeeks(dc):gran==="month"?aggregateMonths(dc):aggregateDays(dc);
+  return daysLimit>0?all.slice(-daysLimit):all;
+}
+
+const tlBarMeta={},tlHoverState={};
+function drawTimeline(id,buckets,selIdx,hoverIdx){
+  const cv=document.getElementById(id);if(!cv)return;
+  const ctx=cv.getContext("2d");
+  const W=cv.offsetWidth||cv.width;cv.width=W;cv.height=cv.offsetHeight||cv.height;
+  const H=cv.height,pad={t:20,r:20,b:28,l:44};
+  const cW=W-pad.l-pad.r,cH=H-pad.t-pad.b;
+  ctx.clearRect(0,0,W,H);
+  if(!buckets.length)return;
+  const vals=buckets.map(b=>b.count),max=Math.max(...vals,1);
+  const n=buckets.length,step=cW/n,bW=Math.max(2,Math.min(60,step*0.75));
+  ctx.strokeStyle=C.bdr;ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){const y=pad.t+cH*(1-i/4);ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();ctx.fillStyle=C.mut;ctx.font="9px monospace";ctx.textAlign="right";ctx.fillText(Math.round(max*i/4),pad.l-4,y+4);}
+  tlBarMeta[id]=[];
+  buckets.forEach((b,i)=>{
+    const x=pad.l+step*i+step/2-bW/2,bH=Math.max(2,(b.count/max)*cH),y=pad.t+cH-bH;
+    const isSel=i===selIdx,isHov=i===hoverIdx;
+    const clr=isSel?C.acc:isHov?"#f0a50088":C.teal;
+    ctx.fillStyle=clr;ctx.globalAlpha=isSel?1:0.82;
+    ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,y,bW,bH,2);else ctx.rect(x,y,bW,bH);ctx.fill();ctx.globalAlpha=1;
+    if(bH>14||isSel){ctx.fillStyle=isSel?"#000":C.dim;ctx.font="bold 9px monospace";ctx.textAlign="center";ctx.fillText(b.count,x+bW/2,y+(bH>14?bH/2+4:-4));}
+    if(n<=30||i%Math.ceil(n/15)===0){ctx.fillStyle=C.dim;ctx.font="9px monospace";ctx.textAlign="center";ctx.fillText(b.shortLabel,x+bW/2,H-pad.b+11);}
+    tlBarMeta[id].push({x,y:pad.t,w:bW,h:cH,idx:i});
+  });
+}
+function tlCanvasClick(e,name){
+  const cv=e.target,rect=cv.getBoundingClientRect(),mx=e.clientX-rect.left;
+  const bars=tlBarMeta[cv.id]||[];
+  const hit=bars.find(b=>mx>=b.x&&mx<=b.x+b.w);
+  if(!hit)return;
+  const st=getTlState(name);
+  st.selectedIdx=st.selectedIdx===hit.idx?null:hit.idx;
+  refreshTimeline(name);
+}
+function tlCanvasMousemove(e,name){
+  const cv=e.target,rect=cv.getBoundingClientRect(),mx=e.clientX-rect.left;
+  const bars=tlBarMeta[cv.id]||[];
+  const hit=bars.find(b=>mx>=b.x&&mx<=b.x+b.w);
+  const prev=tlHoverState[cv.id];
+  const ni=hit?hit.idx:null;
+  if(prev!==ni){tlHoverState[cv.id]=ni;const st=getTlState(name);const bkts=getBuckets(allStats()[name]?.day_counts||{},st.gran,st.daysLimit);drawTimeline(cv.id,bkts,st.selectedIdx,ni);}
+}
+function tlCanvasMouseleave(e,name){const cv=e.target;if(tlHoverState[cv.id]!=null){tlHoverState[cv.id]=null;const st=getTlState(name);const bkts=getBuckets(allStats()[name]?.day_counts||{},st.gran,st.daysLimit);drawTimeline(cv.id,bkts,st.selectedIdx,null);}}
+
+function buildDayDetail(name,bucket){
+  const entries=allEntries().filter(e=>e[F.vt]===name&&bucket.days.some(d=>d.date===e[F.date]));
+  const byErr={};entries.forEach(e=>{byErr[e[F.ed]]=(byErr[e[F.ed]]||0)+1;});
+  const topErr=Object.entries(byErr).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const byMeth={};entries.forEach(e=>{byMeth[e[F.meth]]=(byMeth[e[F.meth]]||0)+1;});
+  const topMeth=Object.entries(byMeth).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  return`<div class="day-detail">
+    <div class="day-detail-hd">
+      <div>
+        <div class="day-detail-date">${bucket.label}</div>
+        <div style="display:flex;gap:16px;margin-top:4px;flex-wrap:wrap">
+          <span class="day-detail-stat"><strong>${bucket.count}</strong> errores</span>
+          <span class="day-detail-stat"><strong>${new Set(entries.map(e=>e[F.meth])).size}</strong> métodos</span>
+          <span class="day-detail-stat"><strong>${new Set(entries.map(e=>e[F.thd])).size}</strong> threads</span>
+        </div>
+      </div>
+      <button class="day-detail-close" onclick="closeTlDetail('${name}')">Cerrar ✕</button>
+    </div>
+    <div class="day-chips">
+      ${topErr.map(([e,c])=>`<span class="day-chip" style="background:#e0525218;color:#e05252;border-color:#e0525244">${esc(e.slice(0,40))} · ${c}</span>`).join("")}
+    </div>
+    <div class="day-table-wrap">
+      <table class="day-table">
+        <thead><tr><th>Fecha/Hora</th><th>Componente</th><th>Método</th><th>Error</th></tr></thead>
+        <tbody>${entries.slice(0,50).map(e=>`<tr onclick="openEntryDetail(${e[F.i]})">
+          <td style="font-family:monospace;font-size:11px;white-space:nowrap"><span style="color:var(--teal)">${esc(e[F.date])}</span> <span style="color:var(--mut)">${esc(e[F.time]).slice(0,8)}</span></td>
+          <td class="td-comp">${esc(e[F.comp])}</td>
+          <td class="td-meth">${esc(e[F.meth])}</td>
+          <td>${ecTag(e[F.ec])}</td>
+        </tr>`).join("")}</tbody>
+      </table>
+    </div>
+    <div id="tl-raw-panel-container"></div>
+  </div>`;
+}
+
+function refreshTimeline(terminalName){
+  const data=allStats()[terminalName];if(!data)return;
+  const st=getTlState(terminalName);
+  const allDays=Object.keys(data.day_counts).length;
+  const buckets=getBuckets(data.day_counts,st.gran,st.daysLimit);
+  const numDays=Object.keys(data.day_counts).length;
+  const sliderLabel=document.getElementById("tl-days-label");
+  if(sliderLabel){const lim=st.daysLimit||allDays;sliderLabel.textContent=`Últimos ${Math.min(lim,allDays)} días`;}
+  const cv=document.getElementById("chart-tl");
+  if(cv){cv.style.height=Math.max(180,Math.min(280,180+buckets.length))+"px";drawTimeline("chart-tl",buckets,st.selectedIdx,tlHoverState["chart-tl"]||null);}
+  const periodEl=document.getElementById("tl-period-label");
+  if(periodEl){
+    const termEntries=allEntries().filter(e=>e[F.vt]===terminalName);
+    if(termEntries.length){
+      const sorted=[...termEntries].sort((a,b)=>(a[F.ts]<b[F.ts]?-1:1));
+      const first=sorted[0],last=sorted[sorted.length-1];
+      periodEl.innerHTML=`<span style="color:var(--teal)">${first[F.date]}</span> <span style="color:var(--dim)">${first[F.time].slice(0,8)}</span> <span style="color:var(--mut)">→</span> <span style="color:var(--teal)">${last[F.date]}</span> <span style="color:var(--dim)">${last[F.time].slice(0,8)}</span> <span style="color:var(--mut)">· ${numDays} día${numDays!==1?"s":""}</span>`;
+    }
+  }
+  const container=document.getElementById("tl-detail-container");
+  if(container){if(st.selectedIdx!==null&&buckets[st.selectedIdx])container.innerHTML=buildDayDetail(terminalName,buckets[st.selectedIdx]);else container.innerHTML="";}
+}
+function closeTlDetail(name){getTlState(name).selectedIdx=null;refreshTimeline(name);}
+function setTlDaysLimit(name,val){const st=getTlState(name);st.daysLimit=parseInt(val);st.selectedIdx=null;refreshTimeline(name);}
+
+let tlSelectedEntry=null;
+function openEntryDetail(id){
+  tlSelectedEntry=(tlSelectedEntry===id?null:id);
+  const c=document.getElementById("tl-raw-panel-container");if(!c)return;
+  if(tlSelectedEntry===null){c.innerHTML="";return;}
+  const e=allEntries().find(x=>x[F.i]===id);
+  if(!e){c.innerHTML="";return;}
+  c.innerHTML=`<div style="margin-top:12px;position:relative">${renderRawPanelInline(e)}</div>`;
+}
+function closeTlEntryDetail(){tlSelectedEntry=null;const c=document.getElementById("tl-raw-panel-container");if(c)c.innerHTML="";}
+
+function hlRaw(raw){
+  return esc(raw)
+    .replace(/(Error\tEvent-\d+)/g,'<span style="color:#e05252;font-weight:700">$1</span>')
+    .replace(/(\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}:\d{2}[\.\d]*)/g,'<span style="color:#2ec4b6">$1</span>')
+    .replace(/(\(thd-\d+\))/g,'<span style="color:#9b5de5">$1</span>')
+    .replace(/(error: \d+ - [^\n]+)/gi,'<span style="color:#f0a500;font-weight:600">$1</span>')
+    .replace(/(Stack trace:)/g,'<span style="color:#4a90d9;font-weight:600">$1</span>')
+    .replace(/(en Oxxo\.[^\n]+)/g,'<span style="color:#4caf7d">$1</span>')
+    .replace(/(en System\.[^\n]+)/g,'<span style="color:#5a607a">$1</span>')
+    .replace(/\t/g,"    ");
+}
+
+function renderRawPanelInline(e){
+  const ec=e[F.ec],color=ecColor(ec),lineNo=e[F.lineNo]||"?",rawText=e[F.raw]||"";
+  const loginFlag=hasLoginFailed(rawText),trans=getErrTranslation(e[F.ed],rawText);
+  const ecLabel=ec==="login"?"Auth Error":ec!=="0"?`SQL Error ${ec}`:"App Error";
+  const loginAlert=loginFlag?`<div style="background:#1a1000;border:1px solid #f0a50066;border-left:3px solid #f0a500;border-radius:6px;padding:10px 14px;margin-top:8px;"><div style="font-size:10px;color:#f0a500;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">🔐 Fallo de autenticación</div><div style="font-size:11px;color:var(--dim);line-height:1.6">La cuenta <strong style="color:#f0a500;font-family:monospace">xse.service.account</strong> fue rechazada por SQL Server.</div></div>`:"";
+  return`<div style="background:var(--surf);border:1px solid var(--bdr);border-left:3px solid ${color};border-radius:8px;overflow:hidden">
+    <div style="padding:12px 16px;border-bottom:1px solid var(--bdr);background:#0d1018;display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+          <span style="font-size:10px;border-radius:4px;padding:2px 8px;font-family:monospace;background:${color}22;color:${color};border:1px solid ${color}44">${ecLabel}</span>
+          <span style="font-size:10px;color:var(--mut);font-family:monospace">${esc(e[F.vt])} · thd-${esc(e[F.thd])}</span>
+          <span style="font-size:10px;background:#2ec4b622;color:var(--teal);border:1px solid #2ec4b644;border-radius:4px;padding:2px 8px;font-family:monospace">Línea ${lineNo}</span>
+        </div>
+        <div style="font-family:monospace;font-size:13px;color:var(--txt);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(e[F.meth])}</div>
+        <div style="font-size:11px;margin-top:4px"><span style="color:var(--teal);font-family:monospace;font-weight:600">${esc(e[F.date])}</span><span style="color:var(--dim);font-family:monospace;margin-left:8px">${esc(e[F.time]).slice(0,8)}</span></div>
+      </div>
+      <button onclick="closeTlEntryDetail()" style="background:transparent;border:1px solid var(--bdr);border-radius:6px;color:var(--dim);font-size:16px;cursor:pointer;padding:4px 10px;line-height:1;flex-shrink:0">✕</button>
+    </div>
+    <div style="padding:10px 16px;border-bottom:1px solid var(--bdr)">
+      <div style="font-size:10px;color:var(--acc);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Descripción</div>
+      <div style="font-size:12px;color:#f5c842;font-family:monospace;line-height:1.5">${esc(e[F.ed])}</div>
+      ${trans&&!loginFlag?`<div style="font-size:11px;color:var(--dim);line-height:1.6;background:#ffffff08;border-radius:5px;padding:8px 10px;margin-top:8px">${trans.icon} <strong style="color:${trans.color}">${trans.short}</strong></div>`:""}${loginAlert}
+    </div>
+    <div style="padding:14px 16px;max-height:240px;overflow-y:auto"><pre style="margin:0;font-size:11px;line-height:1.8;font-family:'Courier New',monospace;color:var(--dim);white-space:pre-wrap;word-break:break-all">${hlRaw(rawText)}</pre></div>
+  </div>`;
+}
+
+function renderOverview(){
+  const stats=allStats(),total=Object.values(stats).reduce((s,d)=>s+d.total,0);
+  const allM={},allE={};
+  Object.values(stats).forEach(d=>{Object.entries(d.method_counts).forEach(([k,v])=>allM[k]=(allM[k]||0)+v);Object.entries(d.err_counts).forEach(([k,v])=>allE[k]=(allE[k]||0)+v);});
+  const cmpMeta=Object.entries(stats).map(([name,d])=>{
+    const entries=allEntries().filter(e=>e[F.vt]===name);
+    let d1=d.date_range[0]||"?",d2=d.date_range[1]||"?";
+    if(entries.length){const sorted=[...entries].sort((a,b)=>(a[F.ts]<b[F.ts]?-1:1));d1=sorted[0][F.date];d2=sorted[sorted.length-1][F.date];}
+    return{name,total:d.total,d1,d2,numDays:Object.keys(d.day_counts).length};
+  });
+  const errE=Object.entries(allE).sort((a,b)=>b[1]-a[1]),errT=errE.reduce((s,[,v])=>s+v,0);
+  document.getElementById("content").innerHTML=`
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Total Global</div><div class="kpi-value" style="color:${C.red}">${total.toLocaleString()}</div><div class="kpi-sub">errores en todos los terminales</div></div>
+    <div class="kpi"><div class="kpi-label">Terminales</div><div class="kpi-value" style="color:${C.acc}">${Object.keys(stats).length}</div><div class="kpi-sub">analizados</div></div>
+    <div class="kpi"><div class="kpi-label">Error Dominante</div><div class="kpi-value" style="color:${C.teal};font-size:22px">SQL-26</div><div class="kpi-sub">Servidor no encontrado</div></div>
+    <div class="kpi"><div class="kpi-label">Servicio</div><div class="kpi-value" style="color:${C.blue};font-size:22px">XSE</div><div class="kpi-sub">Sincronización POS</div></div>
+  </div>
+  <div class="sec-title">Errores por Terminal</div>
+  <div class="chart-box"><canvas id="chart-cmp" style="width:100%;height:240px"></canvas></div>
+  <div class="sec-title">Desglose de Errores SQL</div>
+  <div class="err-table"><table>
+    <thead><tr><th>Descripción del Error</th><th style="text-align:right">Ocurrencias</th><th style="text-align:right">%</th></tr></thead>
+    <tbody>${errE.map(([err,cnt])=>`<tr><td style="font-family:monospace;font-size:11px;color:var(--txt)">${esc(err)}</td><td style="color:var(--red);text-align:right;font-family:monospace;font-weight:700">${cnt}</td><td style="text-align:right"><span class="progress-bar"><span class="progress-fill" style="width:${Math.round(cnt/errT*100)}%"></span></span><span style="color:var(--dim);font-size:11px">${(cnt/errT*100).toFixed(1)}%</span></td></tr>`).join("")}</tbody>
+  </table></div>
+  <div class="sec-title">Diagnóstico Automático</div>
+  <div class="diag-grid">
+    ${[{icon:"🔌",title:"Conectividad SQL Server",sev:C.red,msg:"El error SQL-26 representa >95% de todos los fallos. El servicio XSE no puede alcanzar la instancia de SQL Server."},{icon:"🔄",title:"Impacto en Sincronización",sev:C.acc,msg:"SyncDAO.GetTaskToProcess concentra el mayor volumen, bloqueando la actualización de precios y movimientos en POS."},{icon:"📡",title:"Concurrencia de Hilos",sev:C.teal,msg:"Múltiples threads reportan fallos simultáneos, indicando un problema sistémico en el pool de conexiones SQL."},{icon:"📅",title:"Patrón Temporal",sev:C.blue,msg:"Analiza los picos de error en la línea de tiempo por terminal para identificar ventanas de incidentes recurrentes."}].map(d=>`<div class="diag-card" style="border-left:3px solid ${d.sev}"><div class="diag-card-hd"><span style="font-size:18px">${d.icon}</span><span style="font-size:12px;font-weight:600;color:${d.sev}">${d.title}</span></div><div class="diag-card-msg">${d.msg}</div></div>`).join("")}
+  </div>`;
+  setTimeout(()=>drawBarMeta("chart-cmp",cmpMeta),0);
+}
+
+function renderTerminal(name){
+  const data=allStats()[name];if(!data)return;
+  const sev=data.total>1000?{l:"CRÍTICO",c:C.red}:data.total>100?{l:"ALTO",c:C.acc}:{l:"MEDIO",c:C.teal};
+  const topErr=Object.entries(data.err_counts)[0];
+  const errE=Object.entries(data.err_counts),errT=errE.reduce((s,[,v])=>s+v,0);
+  const loginCnt=data.err_counts["Login failed for user 'xse.service.account'."||0];
+  const st=getTlState(name),numDays=Object.keys(data.day_counts).length;
+  if(!tlState[name]){st.gran=numDays>90?"month":numDays>30?"week":"day";st.selectedIdx=null;st.daysLimit=0;}
+  const buckets=getBuckets(data.day_counts,st.gran,st.daysLimit);
+  const sliderMax=numDays,sliderVal=st.daysLimit||sliderMax;
+
+  // Period KPI
+  const termEntries=allEntries().filter(e=>e[F.vt]===name);
+  let pDate1="?",pTime1="?",pDate2="?",pTime2="?";
+  if(termEntries.length){
+    const sorted=[...termEntries].sort((a,b)=>(a[F.ts]<b[F.ts]?-1:1));
+    pDate1=sorted[0][F.date];pTime1=sorted[0][F.time].slice(0,8);
+    pDate2=sorted[sorted.length-1][F.date];pTime2=sorted[sorted.length-1][F.time].slice(0,8);
+  }
+
+  function errBanner(){
+    if(!topErr)return"";
+    const[errKey,cnt]=topErr,trans=getErrTranslation(errKey,errKey);
+    let html="";
+    if(trans){html+=`<div style="background:#1a0f0f;border:1px solid ${trans.color}44;border-left:4px solid ${trans.color};border-radius:8px;padding:16px 18px;margin:20px 0;"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;"><span style="font-size:22px">${trans.icon}</span><div style="flex:1;min-width:0"><div style="font-size:10px;color:${trans.color};text-transform:uppercase;letter-spacing:.12em;margin-bottom:3px">Error Dominante</div><div style="font-family:monospace;font-size:12px;color:var(--txt);word-break:break-all">${esc(errKey)}</div></div><span style="font-size:11px;color:var(--dim);">Ocurrencias: <strong style="color:${trans.color}">${cnt}</strong></span></div><div style="background:#ffffff08;border-radius:6px;padding:10px 14px;"><div style="font-size:11px;color:var(--dim);line-height:1.7">${trans.detail}</div></div></div>`;
+    }else{html+=`<div class="err-banner"><span style="font-size:20px">⚠</span><div><div style="font-size:11px;color:${C.red};text-transform:uppercase;margin-bottom:2px">Error Dominante</div><div style="color:var(--txt);font-family:monospace">${esc(errKey)}</div><div style="color:var(--dim);font-size:11px">Ocurrencias: <strong style="color:${C.red}">${cnt}</strong></div></div></div>`;}
+    return html;
+  }
+
+  document.getElementById("content").innerHTML=`
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Total Errores</div><div class="kpi-value" style="color:${sev.c}">${data.total.toLocaleString()}</div><div class="kpi-sub">Severidad: ${sev.l}</div></div>
+    <div class="kpi"><div class="kpi-label">Período</div>
+      <div style="margin-top:8px;font-family:monospace;font-size:12px">
+        <div><span style="color:var(--teal);font-weight:700">${pDate1}</span> <span style="color:var(--dim)">${pTime1}</span></div>
+        <div style="color:var(--mut);margin:2px 0 2px 2px">→</div>
+        <div><span style="color:var(--teal);font-weight:700">${pDate2}</span> <span style="color:var(--dim)">${pTime2}</span></div>
+      </div>
+      <div class="kpi-sub" style="margin-top:6px">${numDays} día${numDays!==1?"s":""}  ·  ${data.total} errores</div>
+    </div>
+    <div class="kpi"><div class="kpi-label">Componentes</div><div class="kpi-value" style="color:${C.blue}">${Object.keys(data.comp_counts).length}</div><div class="kpi-sub">afectados</div></div>
+    <div class="kpi"><div class="kpi-label">Métodos</div><div class="kpi-value" style="color:${C.mut}">${Object.keys(data.method_counts).length}</div><div class="kpi-sub">con errores</div></div>
+  </div>
+  ${errBanner()}
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin:28px 0 10px;border-bottom:1px solid var(--bdr);padding-bottom:6px;">
+    <div>
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--mut);">Línea de Tiempo — Errores</div>
+      <div id="tl-period-label" style="font-size:11px;font-family:monospace;margin-top:3px">
+        <span style="color:var(--teal)">${pDate1}</span> <span style="color:var(--dim)">${pTime1}</span> <span style="color:var(--mut)">→</span> <span style="color:var(--teal)">${pDate2}</span> <span style="color:var(--dim)">${pTime2}</span> <span style="color:var(--mut)">· ${numDays} día${numDays!==1?"s":""}</span>
+      </div>
+    </div>
+    <label style="font-size:10px;color:var(--mut);display:flex;flex-direction:column;gap:3px;min-width:180px">
+      <span>Rango: <strong id="tl-days-label" style="color:var(--acc)">Últimos ${Math.min(sliderVal,numDays)} días</strong></span>
+      <input type="range" min="1" max="${sliderMax}" value="${sliderVal}" style="width:100%;accent-color:var(--acc);cursor:pointer" oninput="setTlDaysLimit('${name}',this.value)">
+    </label>
+  </div>
+  <div class="tl-wrap" style="padding:12px 14px;">
+    <div style="font-size:10px;color:var(--mut);font-style:italic;margin-bottom:8px">💡 Haz clic en una barra para ver el detalle de ese período</div>
+    <canvas id="chart-tl" style="width:100%;height:200px;cursor:pointer" onclick="tlCanvasClick(event,'${name}')" onmousemove="tlCanvasMousemove(event,'${name}')" onmouseleave="tlCanvasMouseleave(event,'${name}')"></canvas>
+    <div id="tl-detail-container"></div>
+  </div>
+  <div class="sec-title">Desglose de Errores SQL</div>
+  <div class="err-table"><table>
+    <thead><tr><th>Descripción</th><th style="text-align:right">Ocurrencias</th><th style="text-align:right">%</th></tr></thead>
+    <tbody>${errE.map(([err,cnt])=>`<tr><td style="font-family:monospace;font-size:11px;color:var(--txt)">${esc(err)}</td><td style="color:var(--red);text-align:right;font-family:monospace;font-weight:700">${cnt}</td><td style="text-align:right"><span class="progress-bar"><span class="progress-fill" style="width:${Math.round(cnt/errT*100)}%"></span></span><span style="color:var(--dim);font-size:11px">${(cnt/errT*100).toFixed(1)}%</span></td></tr>`).join("")}</tbody>
+  </table></div>`;
+  setTimeout(()=>{drawTimeline("chart-tl",getBuckets(data.day_counts,st.gran,st.daysLimit),st.selectedIdx,null);},0);
+}
+
+function renderLogViewer(){
+  const ae=allEntries();
+  const uVTs=[...new Set(ae.map(e=>e[F.vt]))].sort();
+  const uComps=[...new Set(ae.map(e=>e[F.comp]))].sort();
+  const uErrs=[...new Set(ae.map(e=>e[F.ec]))].sort();
+  const filtered=getErrFiltered(),sorted=getErrSorted(filtered);
+  const{page,PER_PAGE,sortKey,sortDir,selected}=logState;
+  const pages=Math.ceil(sorted.length/PER_PAGE)||1;
+  const slice=sorted.slice(page*PER_PAGE,(page+1)*PER_PAGE);
+  const selEntry=selected!==null?ae.find(e=>e[F.i]===selected):null;
+  function th(col,label){return`<th class="${sortKey===col?"sorted":""}" onclick="errSort('${col}')">${label}${sortArrow(col,sortKey,sortDir)}</th>`;}
+  document.getElementById("content").innerHTML=`
+  <div class="toolbar">
+    <input class="search-input" placeholder="Buscar método, descripción, componente…" value="${esc(logState.search)}" oninput="errSearchInput(this.value)">
+    <select class="filter-sel" onchange="logState.fVT=this.value;logState.page=0;renderLogViewer()">
+      <option value="all">Todas las terminales</option>${uVTs.map(v=>`<option value="${v}"${logState.fVT===v?" selected":""}>${v}</option>`).join("")}
+    </select>
+    <select class="filter-sel" onchange="logState.fComp=this.value;logState.page=0;renderLogViewer()">
+      <option value="all">Todos los componentes</option>${uComps.map(v=>`<option value="${v}"${logState.fComp===v?" selected":""}>${v}</option>`).join("")}
+    </select>
+    <select class="filter-sel" onchange="logState.fErr=this.value;logState.page=0;renderLogViewer()">
+      <option value="all">Todos los errores</option>${uErrs.map(v=>`<option value="${v}"${logState.fErr===v?" selected":""}>${v}</option>`).join("")}
+    </select>
+  </div>
+  <span class="hint">${filtered.length.toLocaleString()} de ${ae.length.toLocaleString()} entradas</span>
+  <div class="log-table-wrap">
+    <table class="log-table">
+      <thead><tr>${th("date","Fecha / Hora")}${th("vt","Terminal")}${th("comp","Componente")}${th("meth","Método")}${th("ec","Código")}<th>Descripción</th></tr></thead>
+      <tbody>${slice.map(e=>`<tr class="${selected===e[F.i]?"selected":""}" onclick="errSelectEntry(${e[F.i]})">
+        <td style="font-family:monospace;font-size:11px;white-space:nowrap"><span style="color:var(--teal)">${esc(e[F.date])}</span> <span style="color:var(--mut)">${esc(e[F.time]).slice(0,8)}</span></td>
+        <td><span class="tag tag-vt">${esc(e[F.vt])}</span></td>
+        <td class="td-comp">${esc(e[F.comp])}</td>
+        <td class="td-meth" title="${esc(e[F.meth])}">${esc(e[F.meth])}</td>
+        <td>${ecTag(e[F.ec])}</td>
+        <td class="td-desc" title="${esc(e[F.ed])}">${esc(e[F.ed])}</td>
+      </tr>`).join("")}</tbody>
+    </table>
+  </div>
+  <div class="pagination">
+    <span class="page-info">Página ${page+1} de ${pages} · ${page*PER_PAGE+1}–${Math.min((page+1)*PER_PAGE,sorted.length)} de ${sorted.length.toLocaleString()}</span>
+    <div class="page-btns">
+      <button class="page-btn" onclick="errGoPage(0)" ${page===0?"disabled":""}>«</button>
+      <button class="page-btn" onclick="errGoPage(${page-1})" ${page===0?"disabled":""}>‹</button>
+      ${Array.from({length:Math.min(5,pages)},(_,i)=>{let p=page<3?i:page>pages-4?pages-5+i:page-2+i;if(p<0||p>=pages)return"";return`<button class="page-btn ${p===page?"active":""}" onclick="errGoPage(${p})">${p+1}</button>`;}).join("")}
+      <button class="page-btn" onclick="errGoPage(${page+1})" ${page>=pages-1?"disabled":""}>›</button>
+      <button class="page-btn" onclick="errGoPage(${pages-1})" ${page>=pages-1?"disabled":""}>»</button>
+    </div>
+  </div>
+  ${selEntry?renderRawPanel(selEntry):""}
+  ${selEntry?`<div class="overlay" onclick="errSelectEntry(null)"></div>`:""}`;
+}
+function renderRawPanel(e){
+  const ec=e[F.ec],color=ecColor(ec),lineNo=e[F.lineNo]||"?",rawText=e[F.raw]||"";
+  const loginFlag=hasLoginFailed(rawText),trans=getErrTranslation(e[F.ed],rawText);
+  const ecLabel=ec==="login"?"Auth Error":ec!=="0"?`SQL Error ${ec}`:"App Error";
+  const loginAlert=loginFlag?`<div style="background:#1a1000;border:1px solid #f0a50066;border-left:3px solid #f0a500;border-radius:6px;padding:10px 14px;margin-top:8px;"><div style="font-size:10px;color:#f0a500;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">🔐 Fallo de autenticación detectado</div><div style="font-size:11px;color:var(--dim);line-height:1.6">La cuenta <strong style="color:#f0a500;font-family:monospace">xse.service.account</strong> fue rechazada por SQL Server.</div></div>`:"";
+  return`<div class="raw-panel">
+    <div class="raw-panel-hd">
+      <div class="raw-panel-meta">
+        <div class="raw-panel-badges">
+          <span class="badge" style="background:${color}22;color:${color};border-color:${color}44">${ecLabel}</span>
+          <span style="font-size:10px;color:var(--mut);font-family:monospace">${esc(e[F.vt])} · thd-${esc(e[F.thd])}</span>
+          <span style="font-size:10px;background:#2ec4b622;color:var(--teal);border:1px solid #2ec4b644;border-radius:4px;padding:2px 8px;font-family:monospace">Línea ${lineNo}</span>
+        </div>
+        <div class="raw-panel-method">${esc(e[F.meth])}</div>
+        <div class="raw-panel-ts"><span style="color:var(--teal);font-family:monospace;font-weight:600">${esc(e[F.date])}</span><span style="color:var(--dim);font-family:monospace;margin-left:8px">${esc(e[F.time]).slice(0,8)}</span></div>
+      </div>
+      <button class="close-btn" onclick="errSelectEntry(null)">✕</button>
+    </div>
+    <div class="chips-row">
+      ${[["Terminal",e[F.vt],C.acc],["Componente",e[F.comp],C.teal],["Código",ec==="login"?"AUTH":ec!=="0"?`SQL-${ec}`:"App",color],["Thread",`thd-${e[F.thd]}`,C.blue],["Línea",`#${lineNo}`,C.teal]].map(([l,v,c])=>`<div class="chip" style="background:${c}18;border-color:${c}33"><div class="chip-lbl">${l}</div><div class="chip-val" style="color:${c}">${esc(v)}</div></div>`).join("")}
+    </div>
+    <div class="err-desc-row">
+      <div style="font-size:10px;color:var(--acc);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Descripción del Error</div>
+      <div style="font-size:12px;color:#f5c842;font-family:monospace;line-height:1.5">${esc(e[F.ed])}</div>
+      ${trans&&!loginFlag?`<div style="font-size:11px;color:var(--dim);line-height:1.6;background:#ffffff08;border-radius:5px;padding:8px 10px;margin-top:8px">${trans.icon} <strong style="color:${trans.color}">${trans.short}:</strong> ${trans.detail}</div>`:""}
+      ${loginAlert}
+    </div>
+    <div class="raw-content-hd">
+      <div class="raw-content-title">Fragmento Original · Línea ${lineNo}</div>
+      <button class="copy-btn" id="copy-raw-btn" onclick="copyRaw()">Copiar</button>
+    </div>
+    <div class="raw-content-body"><pre class="raw-pre">${hlRaw(rawText)}</pre></div>
+  </div>`;
+}
+function getErrFiltered(){
+  let rows=allEntries();
+  const{search,fVT,fComp,fErr}=logState;
+  if(fVT!=="all")rows=rows.filter(e=>e[F.vt]===fVT);
+  if(fComp!=="all")rows=rows.filter(e=>e[F.comp]===fComp);
+  if(fErr!=="all")rows=rows.filter(e=>e[F.ec]===fErr);
+  if(search.trim()){const q=search.toLowerCase();rows=rows.filter(e=>e[F.meth].toLowerCase().includes(q)||e[F.ed].toLowerCase().includes(q)||e[F.comp].toLowerCase().includes(q)||e[F.date].includes(q));}
+  return rows;
+}
+function getErrSorted(rows){
+  const{sortKey,sortDir}=logState;
+  const idx={ts:F.ts,date:F.ts,comp:F.comp,meth:F.meth,ec:F.ec,vt:F.vt}[sortKey]??F.ts;
+  return[...rows].sort((a,b)=>{const va=a[idx]??"",vb=b[idx]??"";return sortDir==="asc"?(va<vb?-1:va>vb?1:0):(va>vb?-1:va<vb?1:0);});
+}
+let _errSearchTimer=null;
+function errSearchInput(val){logState.search=val;logState.page=0;clearTimeout(_errSearchTimer);_errSearchTimer=setTimeout(renderLogViewer,200);}
+function errSort(col){if(logState.sortKey===col)logState.sortDir=logState.sortDir==="asc"?"desc":"asc";else{logState.sortKey=col;logState.sortDir="desc";}logState.page=0;renderLogViewer();}
+function errGoPage(p){logState.page=p;renderLogViewer();}
+function errSelectEntry(id){logState.selected=logState.selected===id?null:id;renderLogViewer();}
+function copyRaw(){const e=allEntries().find(x=>x[F.i]===logState.selected);navigator.clipboard?.writeText(e?.[F.raw]||"").then(()=>{const btn=document.getElementById("copy-raw-btn");if(btn){btn.textContent="✓ Copiado";btn.classList.add("copied");setTimeout(()=>{btn.textContent="Copiar";btn.classList.remove("copied");},2000);}});}
+
+// ─── Trace views ──────────────────────────────────────────────────────────────
+function renderTraceResumen(){
+  const s=traceStats;if(!s)return;
+  const schedTotal=Object.values(s.schedulerJobs).reduce((t,arr)=>t+arr.length,0);
+  const procTotal=Object.values(s.processDurations).reduce((t,pd)=>t+pd.count,0);
+  const topComps=Object.entries(s.compCounts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const topCompsLabels=topComps.map(([k])=>k),topCompsVals=topComps.map(([,v])=>v);
+  const avgMs=procTotal>0?Math.round(Object.values(s.processDurations).reduce((t,pd)=>t+pd.totalMs,0)/procTotal):0;
+  const maxMs=procTotal>0?Math.max(...Object.values(s.processDurations).map(pd=>pd.maxMs)):0;
+
+  // Service events summary
+  const starts=s.serviceEvents.filter(e=>e.type==="start").length;
+  const stops=s.serviceEvents.filter(e=>e.type==="stop").length;
+
+  document.getElementById("content").innerHTML=`
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Total Eventos</div><div class="kpi-value" style="color:${C.teal}">${s.total.toLocaleString()}</div><div class="kpi-sub">registros de traza</div></div>
+    <div class="kpi"><div class="kpi-label">Período</div>
+      <div style="margin-top:8px;font-family:monospace;font-size:12px">
+        <div><span style="color:var(--teal);font-weight:700">${s.firstDate}</span> <span style="color:var(--dim)">${s.firstTime}</span></div>
+        <div style="color:var(--mut);margin:2px 0 2px 2px">→</div>
+        <div><span style="color:var(--teal);font-weight:700">${s.lastDate}</span> <span style="color:var(--dim)">${s.lastTime}</span></div>
+      </div>
+      <div class="kpi-sub" style="margin-top:6px">${s.threads.length} threads activos</div>
+    </div>
+    <div class="kpi"><div class="kpi-label">Ciclos Scheduler</div><div class="kpi-value" style="color:${C.acc}">${schedTotal.toLocaleString()}</div><div class="kpi-sub">${Object.keys(s.schedulerJobs).length} jobs distintos</div></div>
+    <div class="kpi"><div class="kpi-label">Procesos Medidos</div><div class="kpi-value" style="color:${C.grn}">${procTotal.toLocaleString()}</div><div class="kpi-sub">Avg: ${avgMs}ms · Max: ${maxMs}ms</div></div>
+  </div>
+
+  ${starts>0||stops>0?`<div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+    ${starts>0?`<div style="background:#4caf7d18;border:1px solid #4caf7d44;border-radius:8px;padding:10px 16px;display:flex;align-items:center;gap:10px"><span style="font-size:18px">🟢</span><div><div style="font-size:11px;color:var(--grn);font-weight:600">Servicio Iniciado</div><div style="font-size:10px;color:var(--dim)">${starts} evento${starts!==1?"s":""} detectado${starts!==1?"s":""}</div></div></div>`:""}
+    ${stops>0?`<div style="background:#e0525218;border:1px solid #e0525244;border-radius:8px;padding:10px 16px;display:flex;align-items:center;gap:10px"><span style="font-size:18px">🔴</span><div><div style="font-size:11px;color:var(--red);font-weight:600">Servicio Detenido</div><div style="font-size:10px;color:var(--dim)">${stops} evento${stops!==1?"s":""} detectado${stops!==1?"s":""}</div></div></div>`:""}
+  </div>`:""}
+
+  <div class="sec-title">Actividad por Hora del Día</div>
+  <div class="chart-box"><canvas id="chart-hourly" style="width:100%;height:180px"></canvas></div>
+
+  <div class="two-col" style="margin-top:16px">
+    <div>
+      <div class="sec-title">Componentes más Activos</div>
+      <div class="chart-box"><canvas id="chart-comps" style="width:100%;height:${Math.max(120,topComps.length*28)}px"></canvas></div>
+    </div>
+    <div>
+      <div class="sec-title">Resumen de Scheduler Jobs</div>
+      <div class="sched-grid" style="grid-template-columns:1fr;gap:8px">
+        ${Object.entries(s.schedulerJobs).sort((a,b)=>b[1].length-a[1].length).map(([job,execs])=>{
+          const shortName=job.replace("Scheduler","").replace("Task","");
+          const intervals=execs.slice(1).map((e,i)=>{
+            const t1=execs[i].time.split(":"),t2=e.time.split(":");
+            return(parseInt(t2[0])*60+parseInt(t2[1]))-(parseInt(t1[0])*60+parseInt(t1[1]));
+          }).filter(n=>n>0);
+          const avgInt=intervals.length?Math.round(intervals.reduce((a,b)=>a+b,0)/intervals.length):0;
+          return`<div class="sched-card"><div style="display:flex;justify-content:space-between;align-items:center"><div class="sched-name">${shortName}</div><div style="font-size:18px;font-weight:700;font-family:monospace;color:var(--teal)">${execs.length}</div></div><div style="font-size:10px;color:var(--dim);margin-top:4px">Intervalo aprox: ~${avgInt} min · ${execs[0]?.time||"?"} → ${execs[execs.length-1]?.time||"?"}</div></div>`;
+        }).join("")}
+      </div>
+    </div>
+  </div>`;
+  setTimeout(()=>{
+    drawHourBar("chart-hourly",s.hourCounts);
+    drawHBar("chart-comps",topCompsLabels,topCompsVals,C.teal);
+  },0);
+}
+
+function renderTraceRendimiento(){
+  const s=traceStats;if(!s)return;
+  const pd=s.processDurations;
+  const methods=Object.entries(pd).sort((a,b)=>b[1].maxMs-a[1].maxMs);
+  if(!methods.length){document.getElementById("content").innerHTML=`<div style="text-align:center;padding:60px;color:var(--dim)">No se encontraron registros de duración [Proceso Terminado] en este log.</div>`;return;}
+
+  const topByAvg=methods.slice(0,10);
+  const labels=topByAvg.map(([k])=>k.replace(/.*\./,""));
+  const avgs=topByAvg.map(([,v])=>Math.round(v.totalMs/v.count));
+  const maxes=topByAvg.map(([,v])=>v.maxMs);
+
+  // Find slowest individual execution
+  const allSamples=methods.flatMap(([meth,pd])=>pd.samples.map(s=>({meth,ms:s.ms,ts:s.ts,thd:s.thd,time:s.time})));
+  allSamples.sort((a,b)=>b.ms-a.ms);
+  const top10Slow=allSamples.slice(0,10);
+
+  document.getElementById("content").innerHTML=`
+  <div class="sec-title">Rendimiento por Proceso — Top ${topByAvg.length} (ordenado por máximo)</div>
+  <div class="chart-box" style="margin-bottom:20px"><canvas id="chart-perf" style="width:100%;height:${Math.max(100,topByAvg.length*34)}px"></canvas></div>
+
+  <div class="sec-title">Tabla de Rendimiento Completa</div>
+  <div class="perf-table">
+    <table>
+      <thead><tr><th>Método</th><th style="text-align:right">Llamadas</th><th style="text-align:right">Avg ms</th><th style="text-align:right">Max ms</th><th style="text-align:right">Min ms</th><th style="min-width:120px">Indicador</th></tr></thead>
+      <tbody>${methods.map(([meth,data])=>{
+        const avg=Math.round(data.totalMs/data.count);
+        const clr=durationColor(avg);
+        const barW=Math.round((avg/methods[0][1].maxMs)*100);
+        return`<tr>
+          <td style="font-family:monospace;font-size:11px;color:var(--teal)">${esc(meth)}</td>
+          <td style="text-align:right;font-family:monospace;color:var(--dim)">${data.count}</td>
+          <td style="text-align:right;font-family:monospace;font-weight:700;color:${clr}">${avg}ms</td>
+          <td style="text-align:right;font-family:monospace;color:var(--mut)">${data.maxMs}ms</td>
+          <td style="text-align:right;font-family:monospace;color:var(--dim)">${data.minMs===Infinity?"-":data.minMs+"ms"}</td>
+          <td><div class="ms-bar-wrap"><div class="ms-bar" style="width:${barW}%;max-width:120px;background:${clr};opacity:0.7"></div><span style="font-size:10px;color:${clr}">●</span></div></td>
+        </tr>`;
+      }).join("")}</tbody>
+    </table>
+  </div>
+
+  <div class="sec-title">Las ${top10Slow.length} Ejecuciones Más Lentas</div>
+  <div class="perf-table">
+    <table>
+      <thead><tr><th>#</th><th>Método</th><th style="text-align:right">Duración</th><th>Hora</th><th>Thread</th></tr></thead>
+      <tbody>${top10Slow.map((e,i)=>{
+        const clr=durationColor(e.ms);
+        return`<tr>
+          <td style="font-family:monospace;color:var(--mut);font-size:11px">${i+1}</td>
+          <td style="font-family:monospace;font-size:11px;color:var(--txt)">${esc(e.meth)}</td>
+          <td style="text-align:right;font-family:monospace;font-weight:700;color:${clr}">${e.ms} ms</td>
+          <td style="font-family:monospace;font-size:11px;color:var(--teal)">${esc(e.time||"")}</td>
+          <td style="font-family:monospace;font-size:11px;color:var(--purple)">thd-${esc(e.thd)}</td>
+        </tr>`;
+      }).join("")}</tbody>
+    </table>
+  </div>`;
+  setTimeout(()=>drawDurationHBar("chart-perf",labels,avgs,maxes),0);
+}
+
+function renderTraceSchedulers(){
+  const s=traceStats;if(!s)return;
+  const jobs=s.schedulerJobs;
+  if(!Object.keys(jobs).length){document.getElementById("content").innerHTML=`<div style="text-align:center;padding:60px;color:var(--dim)">No se encontraron eventos de scheduler en este log.</div>`;return;}
+
+  document.getElementById("content").innerHTML=`
+  <div class="sec-title">Línea de Tiempo — Disparos del Scheduler</div>
+  <div style="font-size:10px;color:var(--mut);margin-bottom:8px;font-style:italic">Cada punto representa una ejecución del job en ese momento del día</div>
+  <div class="tl-sched-wrap"><canvas id="chart-sched" style="width:100%;height:auto"></canvas></div>
+
+  <div class="sec-title">Detalle por Job</div>
+  <div class="perf-table">
+    <table>
+      <thead><tr><th>Job</th><th style="text-align:right">Ejecuciones</th><th>Primer Disparo</th><th>Último Disparo</th><th style="text-align:right">Intervalo Aprox.</th><th>Threads Usados</th></tr></thead>
+      <tbody>${Object.entries(jobs).sort((a,b)=>b[1].length-a[1].length).map(([job,execs])=>{
+        const shortName=job.replace("Scheduler","").replace("Task","");
+        const threads=[...new Set(execs.map(e=>e.thd))].slice(0,4);
+        const intervals=execs.slice(1).map((e,i)=>{
+          const p=execs[i].time.split(":"),c=e.time.split(":");
+          const diff=(parseInt(c[0])*60+parseInt(c[1]))-(parseInt(p[0])*60+parseInt(p[1]));
+          return diff>0?diff:null;
+        }).filter(n=>n!==null);
+        const avgInt=intervals.length?Math.round(intervals.reduce((a,b)=>a+b,0)/intervals.length):0;
+        return`<tr>
+          <td style="font-family:monospace;font-size:11px;color:var(--acc);font-weight:700">${esc(shortName)}</td>
+          <td style="text-align:right;font-family:monospace;font-weight:700;color:var(--teal)">${execs.length}</td>
+          <td style="font-family:monospace;font-size:11px"><span style="color:var(--teal)">${execs[0]?.date||""}</span> <span style="color:var(--dim)">${execs[0]?.time||""}</span></td>
+          <td style="font-family:monospace;font-size:11px"><span style="color:var(--teal)">${execs[execs.length-1]?.date||""}</span> <span style="color:var(--dim)">${execs[execs.length-1]?.time||""}</span></td>
+          <td style="text-align:right;font-family:monospace;color:var(--dim)">${avgInt>0?"~"+avgInt+" min":"—"}</td>
+          <td style="font-family:monospace;font-size:10px;color:var(--purple)">${threads.map(t=>"thd-"+t).join(", ")}${threads.length<[...new Set(execs.map(e=>e.thd))].length?"…":""}</td>
+        </tr>`;
+      }).join("")}</tbody>
+    </table>
+  </div>
+
+  <div class="sec-title">Historial de Ejecuciones Recientes</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">
+    ${Object.entries(jobs).map(([job,execs])=>{
+      const shortName=job.replace("Scheduler","").replace("Task","");
+      const recent=execs.slice(-8);
+      return`<div style="background:var(--surf);border:1px solid var(--bdr);border-radius:8px;padding:14px 16px">
+        <div style="font-size:11px;font-family:monospace;color:var(--acc);margin-bottom:10px;font-weight:700">⏱ ${shortName}</div>
+        <div style="display:flex;flex-direction:column;gap:3px">
+          ${recent.map(e=>`<div style="font-size:10px;font-family:monospace;display:flex;justify-content:space-between;padding:3px 6px;border-radius:3px;background:#ffffff05">
+            <span style="color:var(--teal)">${e.date}</span>
+            <span style="color:var(--dim)">${e.time}</span>
+            <span style="color:var(--purple)">thd-${e.thd}</span>
+          </div>`).join("")}
+          ${execs.length>8?`<div style="font-size:10px;color:var(--mut);text-align:center;margin-top:4px">+ ${execs.length-8} ejecuciones más</div>`:""}
+        </div>
+      </div>`;
+    }).join("")}
+  </div>`;
+
+  setTimeout(()=>{
+    const cv=document.getElementById("chart-sched");
+    if(cv){drawSchedTimeline("chart-sched",jobs);}
+  },0);
+}
+
+function renderTraceActividad(){
+  const s=traceStats;if(!s)return;
+  const topComps=Object.entries(s.compCounts).sort((a,b)=>b[1]-a[1]);
+  const topMeths=Object.entries(s.methCounts).sort((a,b)=>b[1]-a[1]).slice(0,10);
+
+  // Minute-level activity for top 3 busiest hours
+  const hoursSorted=Object.entries(s.hourCounts).sort((a,b)=>b[1]-a[1]);
+  const topHours=hoursSorted.slice(0,3).map(([h])=>h);
+
+  document.getElementById("content").innerHTML=`
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Threads Únicos</div><div class="kpi-value" style="color:${C.purple}">${s.threads.length}</div><div class="kpi-sub">IDs de hilo distintos</div></div>
+    <div class="kpi"><div class="kpi-label">Cargas de Config</div><div class="kpi-value" style="color:${C.blue}">${s.configLoads.toLocaleString()}</div><div class="kpi-sub">ConfigDomain.Load</div></div>
+    <div class="kpi"><div class="kpi-label">Tasks en Espera</div><div class="kpi-value" style="color:${C.dim}">${s.newTaskSleep.toLocaleString()}</div><div class="kpi-sub">"NewTask apagado"</div></div>
+    <div class="kpi"><div class="kpi-label">Componentes</div><div class="kpi-value" style="color:${C.teal}">${Object.keys(s.compCounts).length}</div><div class="kpi-sub">activos en el log</div></div>
+  </div>
+
+  <div class="sec-title">Distribución de Actividad por Hora</div>
+  <div class="chart-box"><canvas id="chart-act-hour" style="width:100%;height:180px"></canvas></div>
+
+  <div class="two-col" style="margin-top:20px">
+    <div>
+      <div class="sec-title">Actividad por Componente</div>
+      <div class="chart-box"><canvas id="chart-act-comp" style="width:100%;height:${Math.max(120,topComps.length*24)}px"></canvas></div>
+    </div>
+    <div>
+      <div class="sec-title">Métodos más Invocados</div>
+      <div class="perf-table">
+        <table>
+          <thead><tr><th>#</th><th>Método</th><th style="text-align:right">Llamadas</th></tr></thead>
+          <tbody>${topMeths.map(([meth,cnt],i)=>`<tr>
+            <td style="color:var(--mut);font-size:10px;font-family:monospace">${i+1}</td>
+            <td style="font-family:monospace;font-size:11px;color:var(--teal)">${esc(meth)}</td>
+            <td style="text-align:right;font-family:monospace;font-weight:700;color:var(--acc)">${cnt.toLocaleString()}</td>
+          </tr>`).join("")}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-title">Threads Activos</div>
+  <div style="background:var(--surf);border:1px solid var(--bdr);border-radius:8px;padding:14px 18px">
+    <div style="font-size:11px;color:var(--dim);margin-bottom:10px">${s.threads.length} threads únicos identificados en el log</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px">
+      ${s.threads.sort((a,b)=>parseInt(a)-parseInt(b)).map(t=>`<span style="font-family:monospace;font-size:10px;background:#9b5de518;border:1px solid #9b5de544;border-radius:4px;padding:2px 8px;color:#9b5de5">thd-${t}</span>`).join("")}
+    </div>
+  </div>`;
+
+  setTimeout(()=>{
+    drawHourBar("chart-act-hour",s.hourCounts);
+    drawHBar("chart-act-comp",topComps.map(([k])=>k),topComps.map(([,v])=>v),C.blue);
+  },0);
+}
+
+function msgTypeLabel(t){
+  const map={process_end:"Fin Proceso",process_start:"Inicio Proceso",method_start:"Inicio Método",method_end:"Fin Método",scheduler:"Scheduler",service_start:"Inicio Servicio",service_stop:"Parada Servicio",config:"Config Load",task:"Task Status",other:"Otro"};
+  return map[t]||t;
+}
+function msgTypeBadge(e){
+  const t=e[TF.msgType],dur=e[TF.duration];
+  if(t==="process_end"){
+    const cls=dur!==null?msClass(dur):"";
+    return`<span class="msg-badge msg-process-end ${cls}">${dur!==null?dur+"ms":"Fin"}</span>`;
+  }
+  if(t==="process_start")return`<span class="msg-badge msg-process-start">▶ Inicio</span>`;
+  if(t==="scheduler")return`<span class="msg-badge msg-scheduler">⏱ Sched</span>`;
+  if(t==="service_start"||t==="service_stop")return`<span class="msg-badge msg-service">${t==="service_stop"?"⏹ Stop":"▶ Start"}</span>`;
+  return`<span class="msg-badge msg-method">${msgTypeLabel(t).slice(0,12)}</span>`;
+}
+
+function renderTraceViewer(){
+  const allE=traceEntries;
+  const uComps=[...new Set(allE.map(e=>e[TF.comp]))].sort();
+  const msgTypes=["process_end","process_start","method_start","method_end","scheduler","service_start","service_stop","config","other"];
+  const filtered=getTraceFiltered(),sorted=getTraceSorted(filtered);
+  const{page,PER_PAGE,sortKey,sortDir}=traceViewState;
+  const pages=Math.ceil(sorted.length/PER_PAGE)||1;
+  const slice=sorted.slice(page*PER_PAGE,(page+1)*PER_PAGE);
+
+  function th(col,label){return`<th class="${sortKey===col?"sorted":""}" onclick="traceSort('${col}')">${label}${sortArrow(col,sortKey,sortDir)}</th>`;}
+
+  document.getElementById("content").innerHTML=`
+  <div class="toolbar">
+    <input class="search-input" placeholder="Buscar componente, método, mensaje…" value="${esc(traceViewState.search)}" oninput="traceSearchInput(this.value)">
+    <select class="filter-sel" onchange="traceViewState.fComp=this.value;traceViewState.page=0;renderTraceViewer()">
+      <option value="all">Todos los componentes</option>${uComps.map(v=>`<option value="${v}"${traceViewState.fComp===v?" selected":""}>${v}</option>`).join("")}
+    </select>
+    <select class="filter-sel" onchange="traceViewState.fType=this.value;traceViewState.page=0;renderTraceViewer()">
+      <option value="all">Todos los tipos</option>${msgTypes.map(t=>`<option value="${t}"${traceViewState.fType===t?" selected":""}>${msgTypeLabel(t)}</option>`).join("")}
+    </select>
+  </div>
+  <span class="hint">${filtered.length.toLocaleString()} de ${allE.length.toLocaleString()} eventos</span>
+  <div class="log-table-wrap">
+    <table class="log-table">
+      <thead><tr>${th("ts","Fecha / Hora")}${th("thd","Thread")}${th("comp","Componente")}${th("meth","Método")}<th>Tipo</th><th>Mensaje / Duración</th></tr></thead>
+      <tbody>${slice.map(e=>`<tr>
+        <td style="font-family:monospace;font-size:11px;white-space:nowrap"><span style="color:var(--teal)">${esc(e[TF.date])}</span> <span style="color:var(--mut)">${esc(e[TF.time]).slice(0,8)}</span></td>
+        <td style="font-family:monospace;font-size:10px;color:var(--purple)">thd-${esc(e[TF.thd])}</td>
+        <td class="td-comp">${esc(e[TF.comp])}</td>
+        <td class="td-meth" title="${esc(e[TF.meth])}">${esc(e[TF.meth])}</td>
+        <td>${msgTypeBadge(e)}</td>
+        <td class="td-desc" style="color:var(--dim);font-size:11px">${esc((e[TF.msg]||"").slice(0,80))}</td>
+      </tr>`).join("")}</tbody>
+    </table>
+  </div>
+  <div class="pagination">
+    <span class="page-info">Página ${page+1} de ${pages} · ${page*PER_PAGE+1}–${Math.min((page+1)*PER_PAGE,sorted.length)} de ${sorted.length.toLocaleString()}</span>
+    <div class="page-btns">
+      <button class="page-btn" onclick="traceGoPage(0)" ${page===0?"disabled":""}>«</button>
+      <button class="page-btn" onclick="traceGoPage(${page-1})" ${page===0?"disabled":""}>‹</button>
+      ${Array.from({length:Math.min(5,pages)},(_,i)=>{let p=page<3?i:page>pages-4?pages-5+i:page-2+i;if(p<0||p>=pages)return"";return`<button class="page-btn ${p===page?"active":""}" onclick="traceGoPage(${p})">${p+1}</button>`;}).join("")}
+      <button class="page-btn" onclick="traceGoPage(${page+1})" ${page>=pages-1?"disabled":""}>›</button>
+      <button class="page-btn" onclick="traceGoPage(${pages-1})" ${page>=pages-1?"disabled":""}>»</button>
+    </div>
+  </div>`;
+}
+function getTraceFiltered(){
+  let rows=traceEntries;
+  const{search,fComp,fType}=traceViewState;
+  if(fComp!=="all")rows=rows.filter(e=>e[TF.comp]===fComp);
+  if(fType!=="all")rows=rows.filter(e=>e[TF.msgType]===fType);
+  if(search.trim()){const q=search.toLowerCase();rows=rows.filter(e=>e[TF.comp].toLowerCase().includes(q)||e[TF.meth].toLowerCase().includes(q)||(e[TF.msg]||"").toLowerCase().includes(q));}
+  return rows;
+}
+function getTraceSorted(rows){
+  const{sortKey,sortDir}=traceViewState;
+  const idx={ts:TF.ts,thd:TF.thd,comp:TF.comp,meth:TF.meth}[sortKey]??TF.ts;
+  return[...rows].sort((a,b)=>{const va=a[idx]??"",vb=b[idx]??"";return sortDir==="asc"?(va<vb?-1:va>vb?1:0):(va>vb?-1:va<vb?1:0);});
+}
+let _traceSearchTimer=null;
+function traceSearchInput(val){traceViewState.search=val;traceViewState.page=0;clearTimeout(_traceSearchTimer);_traceSearchTimer=setTimeout(renderTraceViewer,200);}
+function traceSort(col){if(traceViewState.sortKey===col)traceViewState.sortDir=traceViewState.sortDir==="asc"?"desc":"asc";else{traceViewState.sortKey=col;traceViewState.sortDir="asc";}traceViewState.page=0;renderTraceViewer();}
+function traceGoPage(p){traceViewState.page=p;renderTraceViewer();}
+
+// ─── Wiring ───────────────────────────────────────────────────────────────────
+const zone=document.getElementById("upload-zone");
+const fileInput=document.getElementById("file-input");
+zone.addEventListener("dragover",e=>{e.preventDefault();zone.classList.add("drag");});
+zone.addEventListener("dragleave",()=>zone.classList.remove("drag"));
+zone.addEventListener("drop",e=>{e.preventDefault();zone.classList.remove("drag");handleFiles(e.dataTransfer.files);});
+fileInput.addEventListener("change",e=>handleFiles(e.target.files));
+let _rt;window.addEventListener("resize",()=>{clearTimeout(_rt);_rt=setTimeout(renderCurrentTab,200);});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")document.getElementById("owner-modal").style.display="none";});
+
+// ─── Code protection ──────────────────────────────────────────────────────────
+(function(){
+  document.addEventListener("contextmenu",e=>e.preventDefault());
+  document.addEventListener("keydown",e=>{
+    if(e.key==="F12"){e.preventDefault();return;}
+    if((e.ctrlKey||e.metaKey)&&(e.key.toUpperCase()==="U"||e.key.toUpperCase()==="S")){e.preventDefault();return;}
+    if((e.ctrlKey||e.metaKey)&&e.shiftKey&&"IJC".includes(e.key.toUpperCase())){e.preventDefault();return;}
+  });
+  const s=document.createElement("style");
+  s.textContent="body{-webkit-user-select:none;-moz-user-select:none;user-select:none;}input,textarea,pre,.raw-pre{-webkit-user-select:text;-moz-user-select:text;user-select:text;}";
+  document.head.appendChild(s);
+  document.addEventListener("dragstart",e=>e.preventDefault());
+  let _dtOpen=false;
+  const _dtCheck=()=>{
+    const w=window.outerWidth-window.innerWidth>160,h=window.outerHeight-window.innerHeight>160;
+    if((w||h)&&!_dtOpen){_dtOpen=true;document.body.style.filter="blur(8px)";document.body.style.pointerEvents="none";}
+    else if(!w&&!h&&_dtOpen){_dtOpen=false;document.body.style.filter="";document.body.style.pointerEvents="";}
+  };
+  setInterval(_dtCheck,1000);window.addEventListener("resize",_dtCheck);
+})();
+
+// ─── PWA Service Worker ───────────────────────────────────────────────────────
+if("serviceWorker"in navigator){
+  const swCode=`const CACHE="xse-log-v7";self.addEventListener("install",e=>{self.skipWaiting();});self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));});self.addEventListener("fetch",e=>{if(e.request.method!=="GET")return;e.respondWith(caches.open(CACHE).then(cache=>cache.match(e.request).then(r=>{const f=fetch(e.request).then(res=>{if(res.ok)cache.put(e.request,res.clone());return res;}).catch(()=>{});return r||f;})));});`;
+  navigator.serviceWorker.register(URL.createObjectURL(new Blob([swCode],{type:"application/javascript"}))).catch(()=>{});
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+renderWelcome();
+</script>
+</body>
+</html>
